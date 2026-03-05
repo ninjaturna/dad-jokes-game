@@ -17,7 +17,7 @@ export default function Lobby() {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState('')
 
-  const joinUrl = `${window.location.origin}/join/${code}`
+  const joinUrl = `${window.location.origin}/games/canyoukeepastraightface/join/${code}`
 
   // Load room + players
   const loadRoom = useCallback(async () => {
