@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { identityMatchesRoom, clearIdentity } from '../lib/device'
 import { shuffle } from '../lib/gameLogic'
+import { JOKES } from './jokes'
 import type { Room, Player } from '../types/game'
 
 export default function Lobby() {
@@ -141,7 +142,7 @@ export default function Lobby() {
 
     try {
       // Build a shuffled deck of indices (0-based into the JOKES array in game component)
-      // We'll load jokes count from DB — for now use the known 493 count
+
       // In practice we filter by category if set
       let jokeIds: number[] = []
 
@@ -158,7 +159,7 @@ export default function Lobby() {
       const deckOrder =
         jokeIds.length > 0
           ? shuffle(jokeIds)
-          : shuffle(Array.from({ length: 493 }, (_, i) => i))
+          : shuffle(Array.from({ length: JOKES.length }, (_, i) => i))
 
       const alive = players.map((p) => ({ ...p, is_alive: true }))
       const teller =

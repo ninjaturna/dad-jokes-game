@@ -368,8 +368,9 @@ export default function GameRoom() {
 
   const teller = players.find((p) => p.id === room.current_teller_id)
   const listener = players.find((p) => p.id === room.current_listener_id)
-  const jokeIdx = room.deck_order[room.deck_index] ?? 0
-  const joke = JOKES[jokeIdx] ?? { q: '…', a: '…' }
+  const rawIdx = Number(room.deck_order?.[room.deck_index] ?? 0)
+  const jokeIdx = Number.isFinite(rawIdx) ? Math.min(rawIdx, JOKES.length - 1) : 0
+  const joke = JOKES[jokeIdx]
 
   const isHost = myPlayer?.is_host ?? false
   const isTeller = myPlayer?.id === room.current_teller_id
