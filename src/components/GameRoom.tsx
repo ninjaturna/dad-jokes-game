@@ -739,7 +739,7 @@ function ListenerView({
           </p>
         </div>
 
-        <div className="text-8xl font-black tracking-tighter leading-none select-none">
+        <div className="font-black tracking-tighter leading-none select-none" style={{ fontSize: 'clamp(40px, 17vw, 96px)' }}>
           {flipped ? (
             <span className="text-red-500 animate-pulse">DON'T<br />LAUGH!</span>
           ) : (
