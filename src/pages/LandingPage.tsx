@@ -194,6 +194,52 @@ export default function LandingPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────────
+          SECTION 1.5: KEVIN HART VIDEO
+      ────────────────────────────────────────────────────────── */}
+      <section
+        style={{
+          background: '#0D0D12',
+          padding: '48px 24px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px',
+        }}
+      >
+        {/* 16:9 responsive wrapper */}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '560px',
+            aspectRatio: '16 / 9',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            background: '#000',
+          }}
+        >
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/ELN2rXqtwlQ?clip=UgkxizCsKAq1EKuHzfvPUWkEWnrZO0A7l5qt&clipt=EOC9Exjo4RQ&autoplay=1&mute=1&loop=1&playlist=ELN2rXqtwlQ&playsinline=1&controls=0&rel=0"
+            title="Kevin Hart playing Dad Jokes"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{ border: 'none', display: 'block' }}
+          />
+        </div>
+        <p
+          style={{
+            ...NUNITO,
+            fontSize: '13px',
+            color: '#555',
+            textAlign: 'center',
+          }}
+        >
+          Kevin Hart couldn't hold it. Can you?
+        </p>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────
           SECTION 2: THE STAKES
       ────────────────────────────────────────────────────────── */}
       <section
