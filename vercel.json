@@ -1,7 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/root.html" },
     { "source": "/games/canyoukeepastraightface/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/games/canyoukeepastraightface(.*)", "destination": "/index.html" }
+    { "source": "/games/canyoukeepastraightface(.*)", "destination": "/game.html" }
   ]
 }
