@@ -4,6 +4,8 @@
 export type GameMode = '1v1' | 'teams'
 export type RoomStatus = 'lobby' | 'playing' | 'finished'
 export type JokeCategory = 'classic' | 'sports' | 'celebrity' | 'spicy' | null
+export type OfficiationMode = 'dedicated_host' | 'self_officiated'
+export type PlayerRole = 'player' | 'host'
 
 export interface Room {
   id: string
@@ -13,6 +15,7 @@ export interface Room {
   team_0_name: string
   team_1_name: string
   active_category: JokeCategory
+  officiation_mode: OfficiationMode
   deck_order: number[]
   deck_index: number
   round_number: number
@@ -30,6 +33,7 @@ export interface Player {
   team: 0 | 1 | null
   is_alive: boolean
   is_host: boolean
+  role: PlayerRole
   device_id: string | null
   wins: number
   jokes_survived: number
@@ -68,11 +72,13 @@ export type GameEventType =
   | 'game_started'
   | 'joke_revealed'
   | 'laughed'
+  | 'laughed_self_report'
   | 'turn_passed'
   | 'player_eliminated'
   | 'game_over'
   | 'rematch'
   | 'sound_trigger'
+  | 'officiation_set'
 
 export interface GameEvent {
   id: string

@@ -7,10 +7,6 @@ import { playSound, preloadSounds } from '../lib/sounds'
 import Scoreboard from './Scoreboard'
 import type { Room, Player, Round, GameEvent } from '../types/game'
 
-// The 493-joke array from the original component — imported lazily
-// We rely on the JOKES constant in DadJokesGame.jsx for client-side joke text
-// In the multiplayer version jokes are stored by index in deck_order.
-// We re-export the array here for direct access without re-mounting the old component.
 import { JOKES } from './jokes'
 
 type GameScreen = 'game' | 'scoreboard' | 'eliminated' | 'winner'
@@ -130,6 +126,7 @@ export default function GameRoom() {
         playSound('rimshot')
         break
       case 'laughed':
+      case 'laughed_self_report':
         playSound('elimination')
         loadState()
         break
@@ -165,7 +162,7 @@ export default function GameRoom() {
     }
   }
 
-  // ── Host actions ─────────────────────────────────────────────────────────
+  // ── Shared game actions ───────────────────────────────────────────────────
 
   async function revealJoke() {
     if (!room || flipped) return
@@ -180,110 +177,126 @@ export default function GameRoom() {
     })
   }
 
-  async function handleLaughed() {
-    if (!room || !myPlayer?.is_host || processing) return
-    setProcessing(true)
+  // Core elimination logic — shared by dedicated ref and self-officiated modes
+  async function processLaugh() {
+    if (!room || !myPlayer) return
 
-    try {
-      const listener = players.find((p) => p.id === room.current_listener_id)
-      const teller = players.find((p) => p.id === room.current_teller_id)
-      if (!listener || !teller) return
+    const listener = players.find((p) => p.id === room.current_listener_id)
+    const teller = players.find((p) => p.id === room.current_teller_id)
+    if (!listener || !teller) return
 
-      // Mark listener as eliminated
-      await supabase
-        .from('players')
-        .update({ is_alive: false, times_eliminated: listener.times_eliminated + 1 })
-        .eq('id', listener.id)
+    await supabase
+      .from('players')
+      .update({ is_alive: false, times_eliminated: listener.times_eliminated + 1 })
+      .eq('id', listener.id)
 
-      // Mark teller stat
-      await supabase
-        .from('players')
-        .update({ jokes_survived: teller.jokes_survived + 1 })
-        .eq('id', teller.id)
+    await supabase
+      .from('players')
+      .update({ jokes_survived: teller.jokes_survived + 1 })
+      .eq('id', teller.id)
 
-      // Record the round
-      await supabase.from('rounds').insert({
-        room_id: room.id,
-        round_number: room.round_number,
-        teller_id: teller.id,
-        listener_id: listener.id,
-        joke_index: room.deck_order[room.deck_index],
-        laughed: true,
-        completed_at: new Date().toISOString(),
-      })
+    await supabase.from('rounds').insert({
+      room_id: room.id,
+      round_number: room.round_number,
+      teller_id: teller.id,
+      listener_id: listener.id,
+      joke_index: room.deck_order[room.deck_index],
+      laughed: true,
+      completed_at: new Date().toISOString(),
+    })
 
-      const updatedPlayers = players.map((p) =>
-        p.id === listener.id ? { ...p, is_alive: false } : p,
-      )
+    const updatedPlayers = players.map((p) =>
+      p.id === listener.id ? { ...p, is_alive: false } : p,
+    )
 
-      const gameOver = checkGameOver(updatedPlayers, room.mode)
+    const gameOver = checkGameOver(updatedPlayers, room.mode)
+    const eventType = room.officiation_mode === 'self_officiated' ? 'laughed_self_report' : 'laughed'
 
-      if (gameOver) {
-        // Determine winner details
-        let winnerName = ''
-        if (gameOver.type === 'player' && gameOver.winnerId) {
-          winnerName = updatedPlayers.find((p) => p.id === gameOver.winnerId)?.name ?? ''
-          await supabase.from('players').update({ wins: (teller.wins ?? 0) + 1 }).eq('id', teller.id)
-        } else if (gameOver.type === 'team' && gameOver.teamIdx !== undefined) {
-          winnerName = gameOver.teamIdx === 0 ? room.team_0_name : room.team_1_name
-        }
-
-        await supabase.from('rooms').update({ status: 'finished' }).eq('id', room.id)
-
-        await supabase.from('game_events').insert([
-          {
-            room_id: room.id,
-            event_type: 'laughed',
-            payload: { listener_id: listener.id, teller_id: teller.id, round_number: room.round_number },
-            triggered_by: myPlayer.id,
-          },
-          {
-            room_id: room.id,
-            event_type: 'game_over',
-            payload: {
-              winner_type: gameOver.type,
-              winner_id: gameOver.winnerId ?? null,
-              winner_team: gameOver.teamIdx ?? null,
-              winner_name: winnerName,
-            },
-          },
-        ])
-      } else {
-        // Game continues — find next listener after elimination
-        const nextPair = nextPairAfterElimination(updatedPlayers, teller.id, room.mode)
-
-        await supabase.from('rooms').update({
-          current_teller_id: nextPair?.teller.id ?? teller.id,
-          current_listener_id: nextPair?.listener.id ?? listener.id,
-          deck_index: room.deck_index + 1,
-          round_number: room.round_number + 1,
-        }).eq('id', room.id)
-
-        await supabase.from('game_events').insert([
-          {
-            room_id: room.id,
-            event_type: 'laughed',
-            payload: { listener_id: listener.id, teller_id: teller.id, round_number: room.round_number },
-            triggered_by: myPlayer.id,
-          },
-          {
-            room_id: room.id,
-            event_type: 'player_eliminated',
-            payload: {
-              player_id: listener.id,
-              name: listener.name,
-              team: listener.team,
-            },
-          },
-        ])
+    if (gameOver) {
+      let winnerName = ''
+      if (gameOver.type === 'player' && gameOver.winnerId) {
+        winnerName = updatedPlayers.find((p) => p.id === gameOver.winnerId)?.name ?? ''
+        await supabase.from('players').update({ wins: (teller.wins ?? 0) + 1 }).eq('id', teller.id)
+      } else if (gameOver.type === 'team' && gameOver.teamIdx !== undefined) {
+        winnerName = gameOver.teamIdx === 0 ? room.team_0_name : room.team_1_name
       }
-    } finally {
-      setProcessing(false)
+
+      await supabase.from('rooms').update({ status: 'finished' }).eq('id', room.id)
+
+      await supabase.from('game_events').insert([
+        {
+          room_id: room.id,
+          event_type: eventType,
+          payload: { listener_id: listener.id, teller_id: teller.id, round_number: room.round_number },
+          triggered_by: myPlayer.id,
+        },
+        {
+          room_id: room.id,
+          event_type: 'game_over',
+          payload: {
+            winner_type: gameOver.type,
+            winner_id: gameOver.winnerId ?? null,
+            winner_team: gameOver.teamIdx ?? null,
+            winner_name: winnerName,
+          },
+        },
+      ])
+    } else {
+      const nextPair = nextPairAfterElimination(updatedPlayers, teller.id, room.mode)
+
+      await supabase.from('rooms').update({
+        current_teller_id: nextPair?.teller.id ?? teller.id,
+        current_listener_id: nextPair?.listener.id ?? listener.id,
+        deck_index: room.deck_index + 1,
+        round_number: room.round_number + 1,
+      }).eq('id', room.id)
+
+      await supabase.from('game_events').insert([
+        {
+          room_id: room.id,
+          event_type: eventType,
+          payload: { listener_id: listener.id, teller_id: teller.id, round_number: room.round_number },
+          triggered_by: myPlayer.id,
+        },
+        {
+          room_id: room.id,
+          event_type: 'player_eliminated',
+          payload: {
+            player_id: listener.id,
+            name: listener.name,
+            team: listener.team,
+          },
+        },
+      ])
     }
   }
 
+  async function handleLaughed() {
+    if (!room || !myPlayer || processing || !flipped) return
+    // Dedicated ref OR teller calling it in self_officiated
+    const canCall =
+      (room.officiation_mode === 'dedicated_host' && myPlayer.role === 'host') ||
+      (room.officiation_mode === 'self_officiated' && myPlayer.id === room.current_teller_id)
+    if (!canCall) return
+    setProcessing(true)
+    try { await processLaugh() } finally { setProcessing(false) }
+  }
+
+  // Listener self-reports in self_officiated mode
+  async function handleLaughReport() {
+    if (!room || !myPlayer || processing || !flipped) return
+    if (room.officiation_mode !== 'self_officiated') return
+    if (myPlayer.id !== room.current_listener_id) return
+    setProcessing(true)
+    try { await processLaugh() } finally { setProcessing(false) }
+  }
+
   async function handleNoLaugh() {
-    if (!room || !myPlayer?.is_host || processing) return
+    if (!room || !myPlayer || processing || !flipped) return
+    const canCall =
+      (room.officiation_mode === 'dedicated_host' && myPlayer.role === 'host') ||
+      (room.officiation_mode === 'self_officiated' && myPlayer.id === room.current_teller_id)
+    if (!canCall) return
     setProcessing(true)
 
     try {
@@ -291,7 +304,6 @@ export default function GameRoom() {
       const listener = players.find((p) => p.id === room.current_listener_id)
       if (!teller || !listener) return
 
-      // Record the round as no laugh
       await supabase.from('rounds').insert({
         room_id: room.id,
         round_number: room.round_number,
@@ -326,10 +338,11 @@ export default function GameRoom() {
     if (!room || !myPlayer?.is_host) return
 
     const freshDeck = [...room.deck_order]
-    // Rotate deck from current position so we don't repeat jokes
     const rotated = [...freshDeck.slice(room.deck_index), ...freshDeck.slice(0, room.deck_index)]
 
-    const freshPlayers = players.map((p) => ({ ...p, is_alive: true }))
+    const freshPlayers = players
+      .map((p) => ({ ...p, is_alive: true }))
+      .filter((p) => p.role !== 'host')
     const teller = room.mode === '1v1' ? freshPlayers[0] : freshPlayers.find((p) => p.team === 0) ?? freshPlayers[0]
     const listener = room.mode === '1v1' ? freshPlayers[1] : freshPlayers.find((p) => p.team === 1) ?? freshPlayers[1]
 
@@ -373,6 +386,7 @@ export default function GameRoom() {
   const joke = JOKES[jokeIdx]
 
   const isHost = myPlayer?.is_host ?? false
+  const isRef = myPlayer?.role === 'host' && room.officiation_mode === 'dedicated_host'
   const isTeller = myPlayer?.id === room.current_teller_id
   const isListener = myPlayer?.id === room.current_listener_id
 
@@ -481,17 +495,15 @@ export default function GameRoom() {
   }
 
   // ── GAME SCREEN ──────────────────────────────────────────────────────────
-  // Route to the right per-device view
 
-  if (isHost) {
+  if (isRef) {
     return (
-      <HostView
+      <RefPanelView
         room={room}
         players={players}
         rounds={rounds}
         teller={teller}
         listener={listener}
-        joke={joke}
         flipped={flipped}
         processing={processing}
         onReveal={revealJoke}
@@ -502,14 +514,35 @@ export default function GameRoom() {
   }
 
   if (isTeller) {
-    return <TellerView teller={teller} listener={listener} joke={joke} flipped={flipped} room={room} />
+    return (
+      <TellerView
+        teller={teller}
+        listener={listener}
+        joke={joke}
+        flipped={flipped}
+        room={room}
+        processing={processing}
+        onReveal={revealJoke}
+        onLaughed={handleLaughed}
+        onNoLaugh={handleNoLaugh}
+      />
+    )
   }
 
   if (isListener) {
-    return <ListenerView listener={listener} teller={teller} flipped={flipped} />
+    return (
+      <ListenerView
+        listener={listener}
+        teller={teller}
+        flipped={flipped}
+        room={room}
+        processing={processing}
+        onLaughReport={handleLaughReport}
+      />
+    )
   }
 
-  // Spectator view
+  // Spectator / eliminated player
   return (
     <SpectatorView
       room={room}
@@ -528,20 +561,26 @@ export default function GameRoom() {
 interface JokeData { q: string; a: string }
 
 function TellerView({
-  teller: _teller, listener, joke, flipped, room,
+  teller: _teller, listener, joke, flipped, room, processing, onReveal, onLaughed, onNoLaugh,
 }: {
   teller: Player | undefined
   listener: Player | undefined
   joke: JokeData
   flipped: boolean
   room: Room
+  processing: boolean
+  onReveal: () => void
+  onLaughed: () => void
+  onNoLaugh: () => void
 }) {
+  const isSelfOfficiated = room.officiation_mode === 'self_officiated'
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 gap-6">
       <div className="w-full max-w-sm space-y-2 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-green-400">You're telling</p>
         <p className="text-gray-400 text-sm">
-          Keep a straight face — make <span className="text-white font-bold">{listener?.name ?? '…'}</span> laugh
+          Make <span className="text-white font-bold">{listener?.name ?? '…'}</span> laugh
         </p>
       </div>
 
@@ -554,26 +593,60 @@ function TellerView({
             <p className="text-yellow-400 text-xl font-black">{joke.a}</p>
           </div>
         ) : (
-          <p className="text-gray-600 text-sm italic">Waiting for punchline reveal…</p>
+          isSelfOfficiated ? (
+            <button
+              onClick={onReveal}
+              className="w-full py-3 rounded-xl bg-yellow-400 text-black font-black text-sm uppercase tracking-widest active:scale-95 transition-transform"
+            >
+              Reveal Punchline 🥁
+            </button>
+          ) : (
+            <p className="text-gray-600 text-sm italic">Waiting for ref to reveal punchline…</p>
+          )
         )}
       </div>
 
-      <p className="text-gray-600 text-xs text-center">
-        The ref (host) controls the game
-      </p>
+      {/* Self-officiated controls — shown after reveal */}
+      {isSelfOfficiated && flipped && (
+        <div className="w-full max-w-sm grid grid-cols-2 gap-3">
+          <button
+            onClick={onLaughed}
+            disabled={processing}
+            className="py-5 rounded-2xl bg-red-500 text-white font-black text-lg uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform"
+          >
+            😂 LAUGHED
+          </button>
+          <button
+            onClick={onNoLaugh}
+            disabled={processing}
+            className="py-5 rounded-2xl bg-green-600 text-white font-black text-lg uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform"
+          >
+            😐 HELD IT
+          </button>
+        </div>
+      )}
+
+      {!isSelfOfficiated && (
+        <p className="text-gray-600 text-xs text-center">The ref controls the game</p>
+      )}
     </div>
   )
 }
 
 function ListenerView({
-  listener: _listener, teller, flipped,
+  listener: _listener, teller, flipped, room, processing, onLaughReport,
 }: {
   listener: Player | undefined
   teller: Player | undefined
   flipped: boolean
+  room: Room
+  processing: boolean
+  onLaughReport: () => void
 }) {
+  const isSelfOfficiated = room.officiation_mode === 'self_officiated'
+
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 gap-8">
       <div className="text-center space-y-6">
         <div className="space-y-2">
           <p className="text-xs font-bold uppercase tracking-widest text-red-400">You're listening</p>
@@ -594,17 +667,27 @@ function ListenerView({
           <p className="text-gray-600 text-sm">Punchline incoming…</p>
         )}
       </div>
+
+      {/* Self-officiated: listener can self-report */}
+      {isSelfOfficiated && flipped && (
+        <button
+          onClick={onLaughReport}
+          disabled={processing}
+          className="w-full max-w-xs py-5 rounded-2xl bg-red-500 text-white font-black text-xl uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform"
+        >
+          😂 I LAUGHED
+        </button>
+      )}
     </div>
   )
 }
 
-interface HostViewProps {
+interface RefPanelViewProps {
   room: Room
   players: Player[]
   rounds: Round[]
   teller: Player | undefined
   listener: Player | undefined
-  joke: JokeData
   flipped: boolean
   processing: boolean
   onReveal: () => void
@@ -612,10 +695,10 @@ interface HostViewProps {
   onNoLaugh: () => void
 }
 
-function HostView({
-  room, players, rounds, teller, listener, joke,
+function RefPanelView({
+  room, players, rounds, teller, listener,
   flipped, processing, onReveal, onLaughed, onNoLaugh,
-}: HostViewProps) {
+}: RefPanelViewProps) {
   const [showScore, setShowScore] = useState(false)
 
   return (
@@ -624,7 +707,7 @@ function HostView({
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <p className="text-xs text-yellow-400 font-bold uppercase tracking-widest">HOST / REF</p>
+          <p className="text-xs text-yellow-400 font-bold uppercase tracking-widest">🎙️ REF PANEL</p>
           <button
             onClick={() => setShowScore((s) => !s)}
             className="text-xs text-gray-500 border border-gray-800 rounded-lg px-3 py-1"
@@ -653,14 +736,12 @@ function HostView({
           </div>
         </div>
 
-        {/* Joke card */}
-        <div className="bg-gray-900 rounded-3xl p-5 space-y-3 border border-gray-800">
-          <p className="font-bold leading-snug text-lg">{joke.q}</p>
-          {flipped ? (
-            <div className="border-t border-gray-700 pt-3">
-              <p className="text-yellow-400 font-black text-xl">{joke.a}</p>
-            </div>
-          ) : (
+        {/* Ref doesn't see the joke — just controls */}
+        <div className="bg-gray-950 rounded-3xl p-5 border border-gray-800 text-center space-y-3">
+          <p className="text-gray-500 text-sm">
+            {flipped ? 'Punchline has been revealed.' : 'Joke in progress…'}
+          </p>
+          {!flipped && (
             <button
               onClick={onReveal}
               className="w-full py-3 rounded-xl bg-yellow-400 text-black font-black text-sm uppercase tracking-widest active:scale-95 transition-transform"
@@ -670,7 +751,7 @@ function HostView({
           )}
         </div>
 
-        {/* Ref controls — only shown after reveal */}
+        {/* Ref controls — only after reveal */}
         {flipped && (
           <div className="grid grid-cols-2 gap-3">
             <button

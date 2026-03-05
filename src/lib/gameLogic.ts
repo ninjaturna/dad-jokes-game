@@ -19,73 +19,73 @@ export function buildDeck(
   return shuffle(ids)
 }
 
+// Active players: alive AND not a dedicated ref
+function getActivePlayers(players: Player[]): Player[] {
+  return players.filter((p) => p.is_alive && p.role !== 'host')
+}
+
 // Pick the initial teller/listener pair given a fresh player list
 export function pickFirstPair(
   players: Player[],
   mode: GameMode,
 ): { teller: Player; listener: Player } | null {
-  const alive = players.filter((p) => p.is_alive)
-  if (alive.length < 2) return null
+  const active = getActivePlayers(players)
+  if (active.length < 2) return null
 
   if (mode === '1v1') {
-    return { teller: alive[0], listener: alive[1] }
+    return { teller: active[0], listener: active[1] }
   }
 
-  // teams: one player per team
-  const team0 = alive.find((p) => p.team === 0)
-  const team1 = alive.find((p) => p.team === 1)
+  const team0 = active.find((p) => p.team === 0)
+  const team1 = active.find((p) => p.team === 1)
   if (!team0 || !team1) return null
   return { teller: team0, listener: team1 }
 }
 
 // After an elimination, find the next valid teller/listener pair
-// The teller keeps their role; find the next alive listener on the other team
 export function nextPairAfterElimination(
   players: Player[],
   currentTellerId: string,
   mode: GameMode,
 ): { teller: Player; listener: Player } | null {
-  const alive = players.filter((p) => p.is_alive)
-  const teller = alive.find((p) => p.id === currentTellerId)
+  const active = getActivePlayers(players)
+  const teller = active.find((p) => p.id === currentTellerId)
   if (!teller) return null
 
   if (mode === '1v1') {
-    const listener = alive.find((p) => p.id !== currentTellerId)
+    const listener = active.find((p) => p.id !== currentTellerId)
     if (!listener) return null
     return { teller, listener }
   }
 
   const listenerTeam = teller.team === 0 ? 1 : 0
-  const listener = alive.find((p) => p.team === listenerTeam)
+  const listener = active.find((p) => p.team === listenerTeam)
   if (!listener) return null
   return { teller, listener }
 }
 
-// Advance to the next turn (no laugh: swap teller/listener)
+// Advance to the next turn (no laugh: swap teller/listener, rotate within teams)
 export function nextTurnPair(
   players: Player[],
   currentTellerId: string,
   currentListenerId: string,
   mode: GameMode,
 ): { teller: Player; listener: Player } | null {
-  const alive = players.filter((p) => p.is_alive)
+  const active = getActivePlayers(players)
 
   if (mode === '1v1') {
-    const newTeller = alive.find((p) => p.id === currentListenerId)
-    const newListener = alive.find((p) => p.id === currentTellerId)
+    const newTeller = active.find((p) => p.id === currentListenerId)
+    const newListener = active.find((p) => p.id === currentTellerId)
     if (!newTeller || !newListener) return null
     return { teller: newTeller, listener: newListener }
   }
 
-  // teams: rotate within teams
-  const tellerTeamPlayers = alive.filter(
-    (p) => p.team === alive.find((q) => q.id === currentTellerId)?.team,
-  )
-  const listenerTeamPlayers = alive.filter(
-    (p) => p.team === alive.find((q) => q.id === currentListenerId)?.team,
-  )
+  const currentTellerTeam = active.find((q) => q.id === currentTellerId)?.team
+  const currentListenerTeam = active.find((q) => q.id === currentListenerId)?.team
 
-  // New teller = next alive on current listener's team
+  const tellerTeamPlayers = active.filter((p) => p.team === currentTellerTeam)
+  const listenerTeamPlayers = active.filter((p) => p.team === currentListenerTeam)
+
   const nextTellerIdx =
     (listenerTeamPlayers.findIndex((p) => p.id === currentListenerId) + 1) %
     listenerTeamPlayers.length
@@ -99,23 +99,23 @@ export function nextTurnPair(
   return { teller: newTeller, listener: newListener }
 }
 
-// Check if the game is over (returns winning team index for teams mode, or null)
+// Check if the game is over — only considers role='player' participants
 export function checkGameOver(
   players: Player[],
   mode: GameMode,
 ): { type: 'player' | 'team'; winnerId?: string; teamIdx?: 0 | 1 } | null {
-  const alive = players.filter((p) => p.is_alive)
+  const participants = players.filter((p) => p.role !== 'host')
+  const alive = participants.filter((p) => p.is_alive)
 
   if (mode === '1v1') {
     if (alive.length === 1) return { type: 'player', winnerId: alive[0].id }
-    if (alive.length === 0) return null
     return null
   }
 
   const team0Alive = alive.filter((p) => p.team === 0)
   const team1Alive = alive.filter((p) => p.team === 1)
 
-  if (team0Alive.length === 0) return { type: 'team', teamIdx: 1 }
-  if (team1Alive.length === 0) return { type: 'team', teamIdx: 0 }
+  if (team0Alive.length === 0 && team1Alive.length > 0) return { type: 'team', teamIdx: 1 }
+  if (team1Alive.length === 0 && team0Alive.length > 0) return { type: 'team', teamIdx: 0 }
   return null
 }

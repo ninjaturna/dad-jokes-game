@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { identityMatchesRoom, clearIdentity } from '../lib/device'
 import { shuffle } from '../lib/gameLogic'
 import { JOKES } from './jokes'
-import type { Room, Player } from '../types/game'
+import type { Room, Player, OfficiationMode } from '../types/game'
 
 export default function Lobby() {
   const { code } = useParams<{ code: string }>()
@@ -124,15 +124,36 @@ export default function Lobby() {
     setPlayers((prev) => prev.filter((p) => p.id !== playerId))
   }
 
+  async function setOfficiation(mode: OfficiationMode) {
+    if (!room || !myPlayer) return
+    // Update room's officiation mode
+    await supabase.from('rooms').update({ officiation_mode: mode }).eq('id', room.id)
+    setRoom((prev) => prev ? { ...prev, officiation_mode: mode } : prev)
+
+    // Toggle host creator's role: 'host' if dedicated ref, 'player' if self-officiated
+    const newRole = mode === 'dedicated_host' ? 'host' : 'player'
+    const newTeam = mode === 'dedicated_host' ? null : (room.mode === 'teams' ? 0 : null)
+    await supabase.from('players').update({ role: newRole, team: newTeam }).eq('id', myPlayer.id)
+    setMyPlayer((prev) => prev ? { ...prev, role: newRole, team: newTeam } : prev)
+    setPlayers((prev) => prev.map((p) => p.id === myPlayer.id ? { ...p, role: newRole, team: newTeam } : p))
+  }
+
   function canStart(): boolean {
     if (!room) return false
-    if (players.length < 2) return false
+    const activePlayers = players.filter((p) => p.role !== 'host')
+    if (room.officiation_mode === 'dedicated_host') {
+      const refs = players.filter((p) => p.role === 'host')
+      if (refs.length !== 1) return false
+      if (activePlayers.length < 2) return false
+    } else {
+      if (activePlayers.length < 2) return false
+    }
     if (room.mode === 'teams') {
-      const t0 = players.filter((p) => p.team === 0)
-      const t1 = players.filter((p) => p.team === 1)
+      const t0 = activePlayers.filter((p) => p.team === 0)
+      const t1 = activePlayers.filter((p) => p.team === 1)
       return t0.length > 0 && t1.length > 0
     }
-    return players.length >= 2
+    return true
   }
 
   async function startGame() {
@@ -162,14 +183,16 @@ export default function Lobby() {
           : shuffle(Array.from({ length: JOKES.length }, (_, i) => i))
 
       const alive = players.map((p) => ({ ...p, is_alive: true }))
+      // Exclude dedicated ref from joke-telling rotation
+      const participants = alive.filter((p) => p.role !== 'host')
       const teller =
         room.mode === '1v1'
-          ? alive[0]
-          : alive.find((p) => p.team === 0) ?? alive[0]
+          ? participants[0]
+          : participants.find((p) => p.team === 0) ?? participants[0]
       const listener =
         room.mode === '1v1'
-          ? alive[1]
-          : alive.find((p) => p.team === 1) ?? alive[1]
+          ? participants[1]
+          : participants.find((p) => p.team === 1) ?? participants[1]
 
       // Update room to playing
       await supabase.from('rooms').update({
@@ -245,6 +268,42 @@ export default function Lobby() {
           </div>
           <p className="text-gray-500 text-xs text-center break-all">{joinUrl}</p>
         </div>
+
+        {/* Officiation toggle — host only */}
+        {isHost && (
+          <div className="space-y-2">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+              Who's running the game?
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setOfficiation('self_officiated')}
+                className={`py-3 px-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors ${
+                  room.officiation_mode !== 'dedicated_host'
+                    ? 'bg-white text-black border-white'
+                    : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
+                }`}
+              >
+                👥 We're all in
+              </button>
+              <button
+                onClick={() => setOfficiation('dedicated_host')}
+                className={`py-3 px-2 rounded-xl border text-xs font-bold uppercase tracking-wider transition-colors ${
+                  room.officiation_mode === 'dedicated_host'
+                    ? 'bg-white text-black border-white'
+                    : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
+                }`}
+              >
+                🎙️ I'm the ref
+              </button>
+            </div>
+            <p className="text-gray-600 text-xs">
+              {room.officiation_mode === 'dedicated_host'
+                ? "You're the ref — you call laughs. You won't be dealt jokes."
+                : 'Everyone self-officiates — each player calls the other\'s laugh.'}
+            </p>
+          </div>
+        )}
 
         {/* Player list */}
         <div className="space-y-2">
@@ -350,11 +409,15 @@ interface PlayerRowProps {
 }
 
 function PlayerRow({ player, isHost, myId, mode, onToggleTeam, onRemove }: PlayerRowProps) {
+  const isRef = player.role === 'host'
   return (
-    <div className="flex items-center gap-2 bg-gray-900 rounded-xl px-3 py-2">
+    <div className={`flex items-center gap-2 rounded-xl px-3 py-2 ${isRef ? 'bg-yellow-950 border border-yellow-800' : 'bg-gray-900'}`}>
       <span className="flex-1 font-semibold text-sm truncate">
         {player.name}
-        {player.is_host && (
+        {isRef && (
+          <span className="ml-2 text-xs text-yellow-400 font-bold">🎙️ REF</span>
+        )}
+        {player.is_host && !isRef && (
           <span className="ml-2 text-xs text-yellow-400 font-bold">HOST</span>
         )}
         {player.id === myId && (
@@ -362,7 +425,7 @@ function PlayerRow({ player, isHost, myId, mode, onToggleTeam, onRemove }: Playe
         )}
       </span>
 
-      {isHost && mode === 'teams' && (
+      {isHost && mode === 'teams' && !isRef && (
         <button
           onClick={() => onToggleTeam(player.id)}
           className="text-xs px-2 py-1 rounded-lg border border-gray-700 text-gray-400 hover:border-white hover:text-white transition-colors"
