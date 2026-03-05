@@ -220,7 +220,7 @@ export default function LandingPage() {
           <iframe
             width="100%"
             height="100%"
-            src="https://www.youtube.com/embed/ELN2rXqtwlQ?clip=UgkxizCsKAq1EKuHzfvPUWkEWnrZO0A7l5qt&clipt=EOC9Exjo4RQ&autoplay=1&mute=1&loop=1&playlist=ELN2rXqtwlQ&playsinline=1&controls=0&rel=0"
+            src="https://www.youtube.com/embed/ELN2rXqtwlQ?clip=UgkxizCsKAq1EKuHzfvPUWkEWnrZO0A7l5qt&clipt=EOC9Exjo4RQ&autoplay=1&mute=1&loop=1&playlist=ELN2rXqtwlQ&playsinline=1&rel=0"
             title="Kevin Hart playing Dad Jokes"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
