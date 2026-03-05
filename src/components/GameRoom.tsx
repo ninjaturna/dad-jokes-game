@@ -9,7 +9,12 @@ import type { Room, Player, Round, GameEvent } from '../types/game'
 
 import { JOKES } from './jokes'
 
-type GameScreen = 'game' | 'scoreboard' | 'eliminated' | 'winner'
+type GameScreen = 'game' | 'eliminated' | 'winner'
+
+interface BetweenTurn {
+  nextTellerName: string
+  nextRound: number
+}
 
 export default function GameRoom() {
   const { code } = useParams<{ code: string }>()
@@ -24,7 +29,9 @@ export default function GameRoom() {
   const [winner, setWinner] = useState<{ name: string; type: 'player' | 'team' } | null>(null)
   const [lastEliminated, setLastEliminated] = useState<Player | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [betweenTurn, setBetweenTurn] = useState<BetweenTurn | null>(null)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const loadState = useCallback(async () => {
     if (!code) return
@@ -72,6 +79,13 @@ export default function GameRoom() {
     loadState()
     preloadSounds()
   }, [loadState])
+
+  // Clear banner timer on unmount
+  useEffect(() => {
+    return () => {
+      if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current)
+    }
+  }, [])
 
   // Realtime subscription
   useEffect(() => {
@@ -144,11 +158,17 @@ export default function GameRoom() {
         })
         setScreen('winner')
         break
-      case 'turn_passed':
-        setScreen('scoreboard')
+      case 'turn_passed': {
+        // Show brief between-turn banner — auto-dismisses after 2.5s
+        const nextTellerName = (evt.payload.next_teller_name as string) ?? '…'
+        const nextRound = (evt.payload.next_round as number) ?? 1
+        setBetweenTurn({ nextTellerName, nextRound })
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current)
+        bannerTimerRef.current = setTimeout(() => setBetweenTurn(null), 2500)
         setFlipped(false)
         loadState()
         break
+      }
       case 'sound_trigger':
         playSound(evt.payload.sound as Parameters<typeof playSound>[0])
         break
@@ -157,6 +177,7 @@ export default function GameRoom() {
         setFlipped(false)
         setWinner(null)
         setLastEliminated(null)
+        setBetweenTurn(null)
         loadState()
         break
     }
@@ -273,7 +294,6 @@ export default function GameRoom() {
 
   async function handleLaughed() {
     if (!room || !myPlayer || processing || !flipped) return
-    // Dedicated ref OR teller calling it in self_officiated
     const canCall =
       (room.officiation_mode === 'dedicated_host' && myPlayer.role === 'host') ||
       (room.officiation_mode === 'self_officiated' && myPlayer.id === room.current_teller_id)
@@ -282,7 +302,6 @@ export default function GameRoom() {
     try { await processLaugh() } finally { setProcessing(false) }
   }
 
-  // Listener self-reports in self_officiated mode
   async function handleLaughReport() {
     if (!room || !myPlayer || processing || !flipped) return
     if (room.officiation_mode !== 'self_officiated') return
@@ -315,23 +334,60 @@ export default function GameRoom() {
       })
 
       const nextPair = nextTurnPair(players, teller.id, listener.id, room.mode)
+      const nextTellerId = nextPair?.teller.id ?? listener.id
+      const nextTellerName = nextPair?.teller.name ?? listener.name
+      const nextRound = room.round_number + 1
 
       await supabase.from('rooms').update({
-        current_teller_id: nextPair?.teller.id ?? listener.id,
+        current_teller_id: nextTellerId,
         current_listener_id: nextPair?.listener.id ?? teller.id,
         deck_index: room.deck_index + 1,
-        round_number: room.round_number + 1,
+        round_number: nextRound,
       }).eq('id', room.id)
 
       await supabase.from('game_events').insert({
         room_id: room.id,
         event_type: 'turn_passed',
-        payload: { teller_id: teller.id, listener_id: listener.id, round_number: room.round_number },
+        payload: {
+          teller_id: teller.id,
+          listener_id: listener.id,
+          round_number: room.round_number,
+          next_teller_name: nextTellerName,
+          next_round: nextRound,
+        },
         triggered_by: myPlayer.id,
       })
     } finally {
       setProcessing(false)
     }
+  }
+
+  async function handleEndGame() {
+    if (!room || !myPlayer) return
+    const confirmed = window.confirm('End the game? This will declare a winner from current standings.')
+    if (!confirmed) return
+
+    // Pick leader: most jokes_survived among alive non-host players; fall back to all non-host
+    const active = players.filter((p) => p.role !== 'host')
+    const pool = active.filter((p) => p.is_alive).length > 0
+      ? active.filter((p) => p.is_alive)
+      : active
+    const leader = [...pool].sort((a, b) => b.jokes_survived - a.jokes_survived)[0]
+    const winnerName = leader?.name ?? 'Nobody'
+
+    await supabase.from('rooms').update({ status: 'finished' }).eq('id', room.id)
+
+    await supabase.from('game_events').insert({
+      room_id: room.id,
+      event_type: 'game_over',
+      payload: {
+        winner_type: 'player',
+        winner_id: leader?.id ?? null,
+        winner_name: winnerName,
+        reason: 'host_ended',
+      },
+      triggered_by: myPlayer.id,
+    })
   }
 
   async function handleRematch() {
@@ -389,6 +445,7 @@ export default function GameRoom() {
   const isRef = myPlayer?.role === 'host' && room.officiation_mode === 'dedicated_host'
   const isTeller = myPlayer?.id === room.current_teller_id
   const isListener = myPlayer?.id === room.current_listener_id
+  const canEndGame = isRef || isHost
 
   // ── WINNER SCREEN ────────────────────────────────────────────────────────
   if (screen === 'winner' && winner) {
@@ -424,28 +481,6 @@ export default function GameRoom() {
         {!isHost && (
           <p className="text-gray-500 text-sm z-10">Waiting for host to start a rematch…</p>
         )}
-      </div>
-    )
-  }
-
-  // ── SCOREBOARD (between turns) ───────────────────────────────────────────
-  if (screen === 'scoreboard') {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-sm space-y-4">
-          <h2 className="text-2xl font-black text-center">ROUND {room.round_number - 1} OVER</h2>
-          <Scoreboard
-            room={room}
-            players={players}
-            rounds={rounds}
-            label="Standings"
-            showContinue={isHost}
-            onContinue={() => setScreen('game')}
-          />
-          {!isHost && (
-            <p className="text-gray-500 text-sm text-center">Waiting for host…</p>
-          )}
-        </div>
       </div>
     )
   }
@@ -498,61 +533,77 @@ export default function GameRoom() {
 
   if (isRef) {
     return (
-      <RefPanelView
-        room={room}
-        players={players}
-        rounds={rounds}
-        teller={teller}
-        listener={listener}
-        flipped={flipped}
-        processing={processing}
-        onReveal={revealJoke}
-        onLaughed={handleLaughed}
-        onNoLaugh={handleNoLaugh}
-      />
+      <>
+        <RefPanelView
+          room={room}
+          players={players}
+          rounds={rounds}
+          teller={teller}
+          listener={listener}
+          flipped={flipped}
+          processing={processing}
+          canEndGame={canEndGame}
+          onReveal={revealJoke}
+          onLaughed={handleLaughed}
+          onNoLaugh={handleNoLaugh}
+          onEndGame={handleEndGame}
+        />
+        {betweenTurn && <BetweenTurnBanner {...betweenTurn} />}
+      </>
     )
   }
 
   if (isTeller) {
     return (
-      <TellerView
-        teller={teller}
-        listener={listener}
-        joke={joke}
-        flipped={flipped}
-        room={room}
-        processing={processing}
-        onReveal={revealJoke}
-        onLaughed={handleLaughed}
-        onNoLaugh={handleNoLaugh}
-      />
+      <>
+        <TellerView
+          teller={teller}
+          listener={listener}
+          joke={joke}
+          flipped={flipped}
+          room={room}
+          processing={processing}
+          canEndGame={canEndGame}
+          onReveal={revealJoke}
+          onLaughed={handleLaughed}
+          onNoLaugh={handleNoLaugh}
+          onEndGame={handleEndGame}
+        />
+        {betweenTurn && <BetweenTurnBanner {...betweenTurn} />}
+      </>
     )
   }
 
   if (isListener) {
     return (
-      <ListenerView
-        listener={listener}
-        teller={teller}
-        flipped={flipped}
-        room={room}
-        processing={processing}
-        onLaughReport={handleLaughReport}
-      />
+      <>
+        <ListenerView
+          listener={listener}
+          teller={teller}
+          flipped={flipped}
+          room={room}
+          processing={processing}
+          onLaughReport={handleLaughReport}
+        />
+        {betweenTurn && <BetweenTurnBanner {...betweenTurn} />}
+      </>
     )
   }
 
   // Spectator / eliminated player
   return (
-    <SpectatorView
-      room={room}
-      players={players}
-      rounds={rounds}
-      teller={teller}
-      listener={listener}
-      joke={joke}
-      flipped={flipped}
-    />
+    <>
+      <SpectatorView
+        room={room}
+        players={players}
+        rounds={rounds}
+        teller={teller}
+        listener={listener}
+        joke={joke}
+        flipped={flipped}
+      />
+      {betweenTurn && <BetweenTurnBanner {...betweenTurn} />}
+    </>
   )
 }
 
@@ -560,8 +611,28 @@ export default function GameRoom() {
 
 interface JokeData { q: string; a: string }
 
+function RoundHeader({ round, tellerName }: { round: number; tellerName: string }) {
+  return (
+    <p className="text-xs font-bold uppercase tracking-widest text-gray-500 text-center">
+      Round {round} — {tellerName}'s turn
+    </p>
+  )
+}
+
+function EndGameButton({ onEndGame }: { onEndGame: () => void }) {
+  return (
+    <button
+      onClick={onEndGame}
+      className="text-xs text-gray-700 hover:text-gray-400 transition-colors px-2 py-1 border border-gray-800 rounded-lg"
+    >
+      End Game
+    </button>
+  )
+}
+
 function TellerView({
-  teller: _teller, listener, joke, flipped, room, processing, onReveal, onLaughed, onNoLaugh,
+  teller: _teller, listener, joke, flipped, room, processing, canEndGame,
+  onReveal, onLaughed, onNoLaugh, onEndGame,
 }: {
   teller: Player | undefined
   listener: Player | undefined
@@ -569,24 +640,32 @@ function TellerView({
   flipped: boolean
   room: Room
   processing: boolean
+  canEndGame: boolean
   onReveal: () => void
   onLaughed: () => void
   onNoLaugh: () => void
+  onEndGame: () => void
 }) {
   const isSelfOfficiated = room.officiation_mode === 'self_officiated'
+  const tellerName = _teller?.name ?? '…'
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 gap-6">
-      <div className="w-full max-w-sm space-y-2 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-green-400">You're telling</p>
-        <p className="text-gray-400 text-sm">
+      <div className="w-full max-w-sm space-y-1">
+        <div className="flex items-center justify-between">
+          <RoundHeader round={room.round_number} tellerName={tellerName} />
+          {canEndGame && <EndGameButton onEndGame={onEndGame} />}
+        </div>
+        <p className="text-xs font-bold uppercase tracking-widest text-green-400 text-center">
+          You're telling
+        </p>
+        <p className="text-gray-400 text-sm text-center">
           Make <span className="text-white font-bold">{listener?.name ?? '…'}</span> laugh
         </p>
       </div>
 
       {/* Joke card */}
       <div className="w-full max-w-sm bg-gray-900 rounded-3xl p-6 space-y-4 border border-gray-800">
-        <p className="text-xs text-gray-500 uppercase tracking-widest">Round {room.round_number}</p>
         <p className="text-xl font-bold leading-snug">{joke.q}</p>
         {flipped ? (
           <div className="border-t border-gray-700 pt-4">
@@ -644,14 +723,19 @@ function ListenerView({
   onLaughReport: () => void
 }) {
   const isSelfOfficiated = room.officiation_mode === 'self_officiated'
+  const tellerName = teller?.name ?? '…'
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 gap-8">
+      <div className="w-full max-w-sm">
+        <RoundHeader round={room.round_number} tellerName={tellerName} />
+      </div>
+
       <div className="text-center space-y-6">
         <div className="space-y-2">
           <p className="text-xs font-bold uppercase tracking-widest text-red-400">You're listening</p>
           <p className="text-gray-400 text-sm">
-            <span className="text-white font-bold">{teller?.name ?? '…'}</span> is about to hit you with a joke
+            <span className="text-white font-bold">{tellerName}</span> is about to hit you with a joke
           </p>
         </div>
 
@@ -690,14 +774,16 @@ interface RefPanelViewProps {
   listener: Player | undefined
   flipped: boolean
   processing: boolean
+  canEndGame: boolean
   onReveal: () => void
   onLaughed: () => void
   onNoLaugh: () => void
+  onEndGame: () => void
 }
 
 function RefPanelView({
   room, players, rounds, teller, listener,
-  flipped, processing, onReveal, onLaughed, onNoLaugh,
+  flipped, processing, canEndGame, onReveal, onLaughed, onNoLaugh, onEndGame,
 }: RefPanelViewProps) {
   const [showScore, setShowScore] = useState(false)
 
@@ -708,12 +794,15 @@ function RefPanelView({
         {/* Header */}
         <div className="flex items-center justify-between">
           <p className="text-xs text-yellow-400 font-bold uppercase tracking-widest">🎙️ REF PANEL</p>
-          <button
-            onClick={() => setShowScore((s) => !s)}
-            className="text-xs text-gray-500 border border-gray-800 rounded-lg px-3 py-1"
-          >
-            {showScore ? 'Hide scores' : 'Scores'}
-          </button>
+          <div className="flex items-center gap-2">
+            {canEndGame && <EndGameButton onEndGame={onEndGame} />}
+            <button
+              onClick={() => setShowScore((s) => !s)}
+              className="text-xs text-gray-500 border border-gray-800 rounded-lg px-3 py-1"
+            >
+              {showScore ? 'Hide' : 'Scores'}
+            </button>
+          </div>
         </div>
 
         {showScore && (
@@ -810,6 +899,25 @@ function SpectatorView({
           )}
         </div>
         <Scoreboard room={room} players={players} rounds={rounds} label="Standings" />
+      </div>
+    </div>
+  )
+}
+
+function BetweenTurnBanner({ nextTellerName, nextRound }: BetweenTurn) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="text-center space-y-3 px-8">
+        <p className="text-4xl">✅</p>
+        <p className="text-white text-2xl font-black uppercase tracking-widest">
+          Held It — No Laugh
+        </p>
+        <p className="text-gray-400 text-lg font-bold uppercase tracking-widest">
+          Round {nextRound} up next
+        </p>
+        <p className="text-gray-500 text-sm">
+          {nextTellerName}'s turn to tell
+        </p>
       </div>
     </div>
   )
