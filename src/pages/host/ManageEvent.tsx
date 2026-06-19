@@ -28,6 +28,7 @@ export default function ManageEvent() {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [place, setPlace] = useState('')
+  const [visibility, setVisibility] = useState<'private' | 'unlisted' | 'public'>('unlisted')
   const [notify, setNotify] = useState(true)
   const [savedFlash, setSavedFlash] = useState(false)
   const [goingN, setGoingN] = useState(0)
@@ -47,6 +48,7 @@ export default function ManageEvent() {
     setDate(t.date)
     setTime(t.time)
     setPlace(ev.location_name ?? '')
+    setVisibility(ev.visibility)
     setGoingN(await confirmedCount(eid))
     setPoll(await getDatePoll(eid))
     setSlots(await getPotluckSlots(eid))
@@ -57,12 +59,12 @@ export default function ManageEvent() {
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   const orig = toInputs(event.starts_at)
-  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '')
+  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility
 
   async function save() {
     if (!id) return
     const starts_at = date && time ? new Date(`${date}T${time}`).toISOString() : event!.starts_at
-    await updateEventDetails(id, { title, starts_at, location_name: place || null })
+    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
     await reload(id)
@@ -148,6 +150,19 @@ export default function ManageEvent() {
               <input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Venue name"
                 className={inputCls} style={field} />
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Visibility</label>
+            <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'private' | 'unlisted' | 'public')}
+              className={inputCls} style={field}>
+              <option value="private">Private</option>
+              <option value="unlisted">Unlisted</option>
+              <option value="public">Public</option>
+            </select>
+            <p className="mt-2 m-0 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+              Public events show on the landing page; unlisted are link-only.
+            </p>
           </div>
 
           {dirty && (

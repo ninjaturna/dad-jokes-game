@@ -13,22 +13,14 @@ import RequireAuth from './components/auth/RequireAuth'
 import HostDashboard from './pages/host/HostDashboard'
 import CreateEvent from './pages/host/CreateEvent'
 import ManageEvent from './pages/host/ManageEvent'
+import Landing from './pages/Landing'
+import IndexPage from './pages/Index'
 import { GAME_BASE } from './lib/gameRoutes'
-
-function Placeholder() {
-  return (
-    <main className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 py-24 text-center">
-      <p className="font-display text-xs uppercase tracking-[0.28em] text-text-muted">An intimate gathering house · Miami</p>
-      <h1 className="font-display text-5xl font-light leading-tight md:text-6xl">The yard is being planted.</h1>
-      <p className="font-sans text-lg text-text-secondary">Foundation is live — brand tokens, fonts, and the dark/light theme are wired. Screens land next.</p>
-    </main>
-  )
-}
 
 function App() {
   const { pathname } = useLocation()
   const inGame = pathname.startsWith(GAME_BASE)
-  const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host')
+  const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host') || pathname === '/'
   return (
     <div className="min-h-screen bg-bg-page text-text-primary">
       {!hideChrome && (
@@ -38,7 +30,8 @@ function App() {
         </header>
       )}
       <Routes>
-        <Route path="/" element={<Placeholder />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/index" element={<IndexPage />} />
         <Route path="/games" element={<GamesHub />} />
         <Route path="/e/:slug" element={<EventPage />} />
         <Route path="/e/:slug/rsvp" element={<RsvpFlow />} />

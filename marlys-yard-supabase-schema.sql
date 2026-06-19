@@ -272,6 +272,15 @@ create policy ticket_tiers_host on ticket_tiers for all
   with check (exists (select 1 from events e where e.id = ticket_tiers.event_id and e.host_id = auth.uid()));
 create policy ticket_tiers_public_read on ticket_tiers for select using (event_is_published(event_id));
 
+-- Subscribers (CC-7: landing "get on the list")
+create table subscribers (
+  id uuid primary key default uuid_generate_v4(),
+  contact text not null,
+  created_at timestamptz not null default now()
+);
+alter table subscribers enable row level security;
+create policy subscribers_public_insert on subscribers for insert with check (true);
+
 -- realtime
 alter publication supabase_realtime add table events;
 alter publication supabase_realtime add table rsvps;

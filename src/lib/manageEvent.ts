@@ -6,7 +6,7 @@ export async function getEventById(id: string): Promise<EventRow | null> {
   return (data as EventRow) ?? null
 }
 
-export async function updateEventDetails(id: string, fields: { title: string; starts_at: string | null; location_name: string | null }) {
+export async function updateEventDetails(id: string, fields: { title: string; starts_at: string | null; location_name: string | null; visibility?: 'private' | 'unlisted' | 'public' }) {
   const { error } = await supabase.from('events').update(fields).eq('id', id)
   if (error) throw error
 }
