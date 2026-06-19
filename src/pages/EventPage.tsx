@@ -198,10 +198,50 @@ export default function EventPage() {
           )}
         </div>
 
-        {/* guest count */}
-        <div className="mt-6 text-center font-sans text-sm text-text-secondary tabular">
-          {going} going{seatsLeft != null ? ` · ${seatsLeft} seats left` : ''}
-        </div>
+        {/* avatar stack + guest count */}
+        {(() => {
+          const yes = rsvps.filter((r) => r.response === 'yes')
+          const colors = ['#D96B43', '#5DCAA5', '#A67244', '#315955', '#590242']
+          const shown = yes.slice(0, 5)
+          const extra = yes.length - shown.length
+          return (
+            <div className="mt-6 flex items-center justify-center gap-3.5">
+              {shown.length > 0 && (
+                <div className="flex">
+                  {shown.map((r, i) => (
+                    <span key={r.id} className="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 text-[11px] font-bold text-white"
+                      style={{ background: colors[i % colors.length], borderColor: 'var(--bg-page)', marginLeft: i ? -9 : 0 }}>
+                      {r.name.trim().charAt(0).toUpperCase()}
+                    </span>
+                  ))}
+                  {extra > 0 && (
+                    <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 text-[11px] font-bold tabular"
+                      style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--bg-page)', color: 'var(--text-secondary)', marginLeft: -9 }}>+{extra}</span>
+                  )}
+                </div>
+              )}
+              <span className="font-sans text-sm text-text-secondary tabular">{going} going{seatsLeft != null ? ` · ${seatsLeft} seats left` : ''}</span>
+            </div>
+          )
+        })()}
+
+        {/* bring / wear */}
+        {(event.bring_note || event.wear_note) && (
+          <div className="mt-7 grid grid-cols-2 gap-3.5">
+            {event.bring_note && (
+              <div className="rounded-card border border-border px-5 py-[18px]">
+                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">BRING</div>
+                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.bring_note}</div>
+              </div>
+            )}
+            {event.wear_note && (
+              <div className="rounded-card border border-border px-5 py-[18px]">
+                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">WEAR</div>
+                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.wear_note}</div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* footer actions */}
         <div className="mt-7 flex justify-center gap-4">
@@ -212,6 +252,12 @@ export default function EventPage() {
               <a href={event.location_url} target="_blank" rel="noreferrer" className="font-sans text-sm font-semibold text-accent-2 no-underline">View map</a>
             </>
           )}
+          <span style={{ color: 'var(--border)' }}>·</span>
+          <button onClick={async () => {
+            const url = window.location.href
+            if (navigator.share) { try { await navigator.share({ title: event.title, url }) } catch { /* cancelled */ } }
+            else { await navigator.clipboard.writeText(url) }
+          }} className="font-sans text-sm font-semibold text-accent-2">Share</button>
         </div>
       </div>
     </div>
