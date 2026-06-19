@@ -19,6 +19,12 @@ export interface EventRow {
   capacity: number | null
   visibility: 'private' | 'unlisted' | 'public'
   status: 'draft' | 'published' | 'passed' | 'cancelled'
+  tag: string | null
+  bring_note: string | null
+  wear_note: string | null
+  parking_note: string | null
+  links: { label: string; url: string }[]
+  potluck_enabled: boolean
 }
 
 export interface RsvpRow {
