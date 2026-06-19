@@ -22,3 +22,15 @@ export async function sendEmailInvites(input: {
     return { configured: false, delivered: 0 }
   }
 }
+
+export async function sendSmsInvites(input: {
+  eventId: string; listIds: string[]; note: string
+}): Promise<SendResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-sms', { body: input })
+    if (error) return { configured: false, delivered: 0 }
+    return data as SendResult
+  } catch {
+    return { configured: false, delivered: 0 }
+  }
+}

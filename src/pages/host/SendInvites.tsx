@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import Crest from '../../components/brand/Crest'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
-import { getEvent, getLists, sendEmailInvites } from '../../lib/invites'
+import { getEvent, getLists, sendEmailInvites, sendSmsInvites } from '../../lib/invites'
 import type { EventRow } from '../../types/events'
 import type { ListWithMembers } from '../../lib/guests'
 
@@ -51,6 +51,7 @@ export default function SendInvites() {
   const [note, setNote] = useState("Pull up a chair — slow dinner under the vines. Doors at eight, we eat at nine.")
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ configured: boolean; delivered: number } | null>(null)
+  const [sentChannel, setSentChannel] = useState<'email' | 'sms'>('email')
 
   useEffect(() => {
     if (!eventId || !user) return
@@ -71,10 +72,14 @@ export default function SendInvites() {
   const tpl = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0]
 
   const recipientEmails = new Set<string>()
+  const recipientPhones = new Set<string>()
   lists.filter((l) => selected.has(l.id)).forEach((l) => {
-    l.members.forEach((m) => { if (m.email) recipientEmails.add(m.email) })
+    l.members.forEach((m) => {
+      if (m.email) recipientEmails.add(m.email)
+      if (m.phone && m.sms_consent) recipientPhones.add(m.phone)
+    })
   })
-  const recipientCount = recipientEmails.size
+  const recipientCount = channel === 'sms' ? recipientPhones.size : recipientEmails.size
 
   function toggleList(id: string) {
     setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
@@ -83,8 +88,12 @@ export default function SendInvites() {
   async function handleSend() {
     if (!eventId) return
     setSending(true)
+    setSentChannel(channel)
     try {
-      const res = await sendEmailInvites({ eventId, listIds: Array.from(selected), note, template: templateId })
+      const listIds = Array.from(selected)
+      const res = channel === 'sms'
+        ? await sendSmsInvites({ eventId, listIds, note })
+        : await sendEmailInvites({ eventId, listIds, note, template: templateId })
       setResult(res)
     } finally { setSending(false) }
   }
@@ -133,16 +142,16 @@ export default function SendInvites() {
                 <div className="font-bold text-[15px] mb-0.5 text-text-primary">✉ Email</div>
                 <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>Rich invitation card</div>
               </button>
-              <button disabled className="text-left p-4 rounded-[12px] opacity-40 cursor-not-allowed"
-                style={{ border: '1.5px solid var(--border)', background: 'transparent' }}>
+              <button onClick={() => setChannel('sms')} className="text-left p-4 rounded-[12px] cursor-pointer"
+                style={{ border: `1.5px solid ${channel === 'sms' ? 'var(--accent)' : 'var(--border)'}`, background: channel === 'sms' ? 'color-mix(in srgb,var(--accent) 16%, transparent)' : 'transparent' }}>
                 <div className="font-bold text-[15px] mb-0.5 text-text-primary">✆ Text (SMS)</div>
-                <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>Connect SMS (coming soon)</div>
+                <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>Direct to their phone</div>
               </button>
             </div>
           </section>
 
-          {/* Design picker */}
-          <section className="border border-border rounded-[14px] p-[22px]" style={{ background: 'var(--bg-surface)' }}>
+          {/* Design picker — email only */}
+          {channel === 'email' && <section className="border border-border rounded-[14px] p-[22px]" style={{ background: 'var(--bg-surface)' }}>
             <div className="font-display font-bold text-base mb-1.5">Invitation design</div>
             <p className="text-[13px] m-0 mb-4" style={{ color: 'var(--text-muted)' }}>
               Pick the look — all on-brand, all from the system.
@@ -161,7 +170,7 @@ export default function SendInvites() {
                 </button>
               ))}
             </div>
-          </section>
+          </section>}
 
           {/* Recipients */}
           <section className="border border-border rounded-[14px] p-[22px]" style={{ background: 'var(--bg-surface)' }}>
@@ -169,6 +178,11 @@ export default function SendInvites() {
               <div className="font-display font-bold text-base">Recipients</div>
               <span className="text-[13px] font-bold tabular" style={{ color: 'var(--accent-2)' }}>{recipientCount} people</span>
             </div>
+            {channel === 'sms' && (
+              <p className="text-[12px] m-0 mb-3" style={{ color: 'var(--text-muted)' }}>
+                Only contacts who opted in to texts are included.
+              </p>
+            )}
             <p className="text-[13px] m-0 mb-4" style={{ color: 'var(--text-muted)' }}>
               Pick lists from your guest book, or add individuals.
             </p>
@@ -212,6 +226,27 @@ export default function SendInvites() {
           <div className="text-[11px] tracking-[.22em] font-bold" style={{ color: 'var(--text-muted)' }}>
             {channel === 'email' ? 'EMAIL PREVIEW' : 'TEXT PREVIEW'}
           </div>
+
+          {/* SMS preview */}
+          {channel === 'sms' && (
+            <div className="overflow-hidden rounded-[14px] border border-border"
+              style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
+              <div className="px-4 py-3 border-b border-border text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                <span className="font-semibold text-text-secondary">From</span> Black Cafe @ Marly's Yard
+              </div>
+              <div className="p-5">
+                <div className="ml-auto max-w-[260px] rounded-[16px] rounded-br-[4px] px-4 py-3 text-[13.5px] leading-[1.55]"
+                  style={{ background: '#315955', color: '#EAF6F0' }}>
+                  {note || 'Your note will appear here.'}
+                  <br /><br />
+                  RSVP — {event.title}: blackcafe.miami/e/{event.slug}
+                </div>
+                <div className="mt-2 text-right text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  Msg & data rates may apply · Reply STOP to opt out
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Email preview card */}
           {channel === 'email' && (
@@ -278,8 +313,11 @@ export default function SendInvites() {
           {result && !result.configured && (
             <div className="rounded-[10px] px-4 py-[14px] text-[13.5px] leading-[1.55]"
               style={{ background: 'color-mix(in srgb,var(--candle) 14%, transparent)', border: '1px solid var(--candle)' }}>
-              <strong style={{ color: 'var(--candle)' }}>Email isn't connected yet</strong> — set{' '}
-              <code className="text-[12px]">SENDGRID_API_KEY</code> to start sending. Your invite is saved as a draft.
+              {sentChannel === 'sms' ? (
+                <><strong style={{ color: 'var(--candle)' }}>Text isn't connected yet</strong> — set <code className="text-[12px]">TWILIO_ACCOUNT_SID</code>, <code className="text-[12px]">TWILIO_AUTH_TOKEN</code>, and <code className="text-[12px]">TWILIO_MESSAGING_SERVICE_SID</code> to start sending.</>
+              ) : (
+                <><strong style={{ color: 'var(--candle)' }}>Email isn't connected yet</strong> — set <code className="text-[12px]">SENDGRID_API_KEY</code> to start sending. Your invite is saved as a draft.</>
+              )}
             </div>
           )}
 

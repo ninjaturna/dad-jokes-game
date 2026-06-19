@@ -48,6 +48,7 @@ export default function Guests() {
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newPhone, setNewPhone] = useState('')
+  const [newSmsConsent, setNewSmsConsent] = useState(false)
   const [addingContact, setAddingContact] = useState(false)
   const [editListId, setEditListId] = useState<string | null>(null)
   const [editListName, setEditListName] = useState('')
@@ -67,8 +68,8 @@ export default function Guests() {
     if (!user || !newName.trim()) return
     setAddingContact(true)
     try {
-      await addContact(user.id, { name: newName, email: newEmail || undefined, phone: newPhone || undefined })
-      setNewName(''); setNewEmail(''); setNewPhone(''); setShowAddForm(false)
+      await addContact(user.id, { name: newName, email: newEmail || undefined, phone: newPhone || undefined, smsConsent: newSmsConsent })
+      setNewName(''); setNewEmail(''); setNewPhone(''); setNewSmsConsent(false); setShowAddForm(false)
       await reload()
     } finally { setAddingContact(false) }
   }
@@ -200,6 +201,13 @@ export default function Guests() {
                   placeholder="Phone number" type="tel" className={inp} style={fld} />
               </div>
             </div>
+            <label className="mb-3 flex cursor-pointer items-start gap-2.5">
+              <input type="checkbox" checked={newSmsConsent} onChange={(e) => setNewSmsConsent(e.target.checked)}
+                className="mt-0.5 flex-none accent-[var(--accent)]" />
+              <span className="text-[12.5px] leading-[1.5] text-text-muted">
+                I have their permission to text them about gatherings
+              </span>
+            </label>
             <div className="flex justify-end gap-2.5">
               <button onClick={() => setShowAddForm(false)}
                 className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2.5 rounded-[8px] cursor-pointer"

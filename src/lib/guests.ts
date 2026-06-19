@@ -1,22 +1,22 @@
 import { supabase } from './supabase'
 
-export interface Contact { id: string; name: string; email: string | null; phone: string | null }
+export interface Contact { id: string; name: string; email: string | null; phone: string | null; sms_consent: boolean }
 export interface ListWithMembers { id: string; name: string; members: Contact[] }
 export interface PendingRsvp { id: string; name: string; response: string; plus_ones: number; event_id: string; event_title: string }
 
 export async function getContacts(hostId: string): Promise<Contact[]> {
-  const { data } = await supabase.from('guests').select('id,name,email,phone').eq('host_id', hostId).order('name')
+  const { data } = await supabase.from('guests').select('id,name,email,phone,sms_consent').eq('host_id', hostId).order('name')
   return (data as Contact[]) ?? []
 }
 
-export async function addContact(hostId: string, c: { name: string; email?: string; phone?: string }) {
-  const { error } = await supabase.from('guests').insert({ host_id: hostId, name: c.name.trim(), email: c.email?.trim() || null, phone: c.phone?.trim() || null })
+export async function addContact(hostId: string, c: { name: string; email?: string; phone?: string; smsConsent?: boolean }) {
+  const { error } = await supabase.from('guests').insert({ host_id: hostId, name: c.name.trim(), email: c.email?.trim() || null, phone: c.phone?.trim() || null, sms_consent: c.smsConsent ?? false })
   if (error) throw error
 }
 
 export async function getLists(hostId: string): Promise<ListWithMembers[]> {
   const { data: lists } = await supabase.from('lists').select('id,name').eq('host_id', hostId).order('name')
-  const { data: rawMembers } = await supabase.from('list_members').select('list_id, guests(id,name,email,phone)')
+  const { data: rawMembers } = await supabase.from('list_members').select('list_id, guests(id,name,email,phone,sms_consent)')
   type MemberRow = { list_id: string; guests: Contact }
   const byList = ((rawMembers ?? []) as unknown as MemberRow[]).reduce<Record<string, Contact[]>>((m, row) => {
     if (row.guests) (m[row.list_id] ??= []).push(row.guests)
