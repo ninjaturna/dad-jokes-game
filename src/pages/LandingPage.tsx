@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { JOKES } from '../components/jokes'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { GAME_BASE } from '../lib/gameRoutes'
 
 const BANGERS: React.CSSProperties = { fontFamily: "'Bangers', cursive" }
 const NUNITO: React.CSSProperties = { fontFamily: "'Nunito', sans-serif" }
@@ -17,7 +18,7 @@ export default function LandingPage() {
 
   function handleJoin() {
     const code = joinCode.trim().toUpperCase()
-    if (code.length > 0) navigate(`/join/${code}`)
+    if (code.length > 0) navigate(`${GAME_BASE}/join/${code}`)
   }
 
   return (
@@ -156,7 +157,7 @@ export default function LandingPage() {
           {/* CTA */}
           <button
             className="cta-btn fade-in-cta"
-            onClick={() => navigate('/play')}
+            onClick={() => navigate(`${GAME_BASE}/play`)}
             aria-label="Start a free game"
             style={{
               ...BANGERS,
@@ -512,7 +513,7 @@ export default function LandingPage() {
             >
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
-                  onClick={() => navigate('/play')}
+                  onClick={() => navigate(`${GAME_BASE}/play`)}
                   aria-label="I laughed — start a game"
                   style={{
                     ...BANGERS,
@@ -530,7 +531,7 @@ export default function LandingPage() {
                   😂 I LAUGHED
                 </button>
                 <button
-                  onClick={() => navigate('/play')}
+                  onClick={() => navigate(`${GAME_BASE}/play`)}
                   aria-label="Held it — start a game"
                   style={{
                     ...BANGERS,
@@ -684,7 +685,7 @@ export default function LandingPage() {
           {/* Create CTA */}
           <button
             className="cta-btn"
-            onClick={() => navigate('/play')}
+            onClick={() => navigate(`${GAME_BASE}/play`)}
             aria-label="Create a free game room"
             style={{
               ...BANGERS,

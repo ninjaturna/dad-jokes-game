@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getDeviceId, saveIdentity, identityMatchesRoom } from '../lib/device'
+import { GAME_BASE } from '../lib/gameRoutes'
 
 export default function JoinRoom() {
   const { code } = useParams<{ code?: string }>()
@@ -17,7 +18,7 @@ export default function JoinRoom() {
     if (!code) return
     const existing = identityMatchesRoom(code)
     if (existing) {
-      navigate(`/lobby/${code.toUpperCase()}`, { replace: true })
+      navigate(`${GAME_BASE}/lobby/${code.toUpperCase()}`, { replace: true })
     }
   }, [code, navigate])
 
@@ -72,7 +73,7 @@ export default function JoinRoom() {
           room_id: room.id,
           join_code: trimmedCode,
         })
-        navigate(`/lobby/${trimmedCode}`)
+        navigate(`${GAME_BASE}/lobby/${trimmedCode}`)
         return
       }
 
@@ -118,7 +119,7 @@ export default function JoinRoom() {
         join_code: trimmedCode,
       })
 
-      navigate(`/lobby/${trimmedCode}`)
+      navigate(`${GAME_BASE}/lobby/${trimmedCode}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -179,7 +180,7 @@ export default function JoinRoom() {
 
         <div className="text-center">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(GAME_BASE)}
             className="text-gray-500 text-sm underline underline-offset-2"
           >
             Create a new room instead

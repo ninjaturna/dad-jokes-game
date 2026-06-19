@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { identityMatchesRoom, clearIdentity } from '../lib/device'
+import { GAME_BASE } from '../lib/gameRoutes'
 import { checkGameOver, nextTurnPair, nextPairAfterElimination } from '../lib/gameLogic'
 import { playSound, preloadSounds } from '../lib/sounds'
 import Scoreboard from './Scoreboard'
@@ -37,7 +38,7 @@ export default function GameRoom() {
     if (!code) return
     const identity = identityMatchesRoom(code)
     if (!identity) {
-      navigate(`/join/${code}`, { replace: true })
+      navigate(`${GAME_BASE}/join/${code}`, { replace: true })
       return
     }
 
@@ -47,8 +48,8 @@ export default function GameRoom() {
       .eq('join_code', code.toUpperCase())
       .single()
 
-    if (!roomData) { navigate('/', { replace: true }); return }
-    if (roomData.status === 'lobby') { navigate(`/lobby/${code}`, { replace: true }); return }
+    if (!roomData) { navigate(GAME_BASE, { replace: true }); return }
+    if (roomData.status === 'lobby') { navigate(`${GAME_BASE}/lobby/${code}`, { replace: true }); return }
 
     setRoom(roomData as Room)
 
@@ -422,7 +423,7 @@ export default function GameRoom() {
 
   function leaveGame() {
     clearIdentity()
-    navigate('/')
+    navigate(GAME_BASE)
   }
 
   // ── Derived state ─────────────────────────────────────────────────────────
@@ -713,7 +714,7 @@ function TellerView({
 }
 
 function ListenerView({
-  listener: _listener, teller, flipped, room, processing, onLaughReport,
+  teller, flipped, room, processing, onLaughReport,
 }: {
   listener: Player | undefined
   teller: Player | undefined
@@ -924,24 +925,34 @@ function BetweenTurnBanner({ nextTellerName, nextRound }: BetweenTurn) {
 }
 
 // Simple CSS confetti
+const CONFETTI_COLORS = ['#facc15', '#f87171', '#4ade80', '#60a5fa', '#e879f9', '#fb923c']
+const CONFETTI_PIECES = Array.from({ length: 40 }, (_, i) => ({
+  left: `${Math.random() * 100}%`,
+  top: `-${Math.random() * 20 + 5}%`,
+  size: Math.random() * 10 + 6,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+  radius: Math.random() > 0.5 ? '50%' : '2px',
+  duration: Math.random() * 3 + 2,
+  delay: Math.random() * 2,
+  opacity: Math.random() * 0.8 + 0.2,
+}))
+
 function Confetti() {
-  const pieces = Array.from({ length: 40 }, (_, i) => i)
-  const colors = ['#facc15', '#f87171', '#4ade80', '#60a5fa', '#e879f9', '#fb923c']
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {pieces.map((i) => (
+      {CONFETTI_PIECES.map((p, i) => (
         <div
           key={i}
           style={{
             position: 'absolute',
-            left: `${Math.random() * 100}%`,
-            top: `-${Math.random() * 20 + 5}%`,
-            width: `${Math.random() * 10 + 6}px`,
-            height: `${Math.random() * 10 + 6}px`,
-            background: colors[i % colors.length],
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            animation: `fall ${Math.random() * 3 + 2}s linear ${Math.random() * 2}s infinite`,
-            opacity: Math.random() * 0.8 + 0.2,
+            left: p.left,
+            top: p.top,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            background: p.color,
+            borderRadius: p.radius,
+            animation: `fall ${p.duration}s linear ${p.delay}s infinite`,
+            opacity: p.opacity,
           }}
         />
       ))}

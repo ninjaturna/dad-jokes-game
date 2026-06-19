@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { identityMatchesRoom, clearIdentity } from '../lib/device'
+import { GAME_BASE } from '../lib/gameRoutes'
 import { shuffle } from '../lib/gameLogic'
 import { JOKES } from './jokes'
 import type { Room, Player, OfficiationMode } from '../types/game'
@@ -17,7 +18,7 @@ export default function Lobby() {
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState('')
 
-  const joinUrl = `${window.location.origin}/games/canyoukeepastraightface/join/${code}`
+  const joinUrl = `${window.location.origin}${GAME_BASE}/join/${code}`
 
   // Load room + players
   const loadRoom = useCallback(async () => {
@@ -25,7 +26,7 @@ export default function Lobby() {
 
     const identity = identityMatchesRoom(code)
     if (!identity) {
-      navigate(`/join/${code}`, { replace: true })
+      navigate(`${GAME_BASE}/join/${code}`, { replace: true })
       return
     }
 
@@ -36,12 +37,12 @@ export default function Lobby() {
       .single()
 
     if (!roomData) {
-      navigate('/', { replace: true })
+      navigate(GAME_BASE, { replace: true })
       return
     }
 
     if (roomData.status === 'playing') {
-      navigate(`/room/${code}`, { replace: true })
+      navigate(`${GAME_BASE}/room/${code}`, { replace: true })
       return
     }
 
@@ -59,6 +60,8 @@ export default function Lobby() {
   }, [code, navigate])
 
   useEffect(() => {
+    // loadRoom is an async loader; its setState calls run post-await, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRoom()
   }, [loadRoom])
 
@@ -82,7 +85,7 @@ export default function Lobby() {
             loadRoom()
           }
           if (evt.event_type === 'game_started') {
-            navigate(`/room/${code}`, { replace: true })
+            navigate(`${GAME_BASE}/room/${code}`, { replace: true })
           }
         },
       )
@@ -98,7 +101,7 @@ export default function Lobby() {
           const updated = payload.new as Room
           setRoom(updated)
           if (updated.status === 'playing') {
-            navigate(`/room/${code}`, { replace: true })
+            navigate(`${GAME_BASE}/room/${code}`, { replace: true })
           }
         },
       )
@@ -222,7 +225,7 @@ export default function Lobby() {
         },
       })
 
-      navigate(`/room/${code}`)
+      navigate(`${GAME_BASE}/room/${code}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to start')
       setStarting(false)
@@ -231,7 +234,7 @@ export default function Lobby() {
 
   function leaveRoom() {
     clearIdentity()
-    navigate('/')
+    navigate(GAME_BASE)
   }
 
   if (!room) {

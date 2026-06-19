@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getDeviceId, saveIdentity } from '../lib/device'
+import { GAME_BASE } from '../lib/gameRoutes'
 import type { GameMode, JokeCategory } from '../types/game'
 
 const CATEGORIES: { label: string; value: JokeCategory }[] = [
@@ -82,7 +83,7 @@ export default function Home() {
         join_code: joinCode,
       })
 
-      navigate(`/lobby/${joinCode}`)
+      navigate(`${GAME_BASE}/lobby/${joinCode}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -202,7 +203,7 @@ export default function Home() {
         <div className="text-center">
           <span className="text-gray-600 text-sm">Joining someone else's game? </span>
           <button
-            onClick={() => navigate('/join/')}
+            onClick={() => navigate(`${GAME_BASE}/join`)}
             className="text-white text-sm underline underline-offset-2"
           >
             Enter code
