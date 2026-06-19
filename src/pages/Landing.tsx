@@ -36,6 +36,7 @@ export default function Landing() {
             <a href="#gatherings" className="no-underline" style={{ color: 'inherit' }}>Gatherings</a>
             <a href="#about" className="no-underline" style={{ color: 'inherit' }}>About</a>
             <a href="#invite" className="no-underline" style={{ color: 'inherit' }}>Get invited</a>
+            <Link to="/host" className="no-underline font-semibold" style={{ color: 'var(--text-muted)' }}>Host</Link>
           </div>
           <ThemeToggle />
         </div>
