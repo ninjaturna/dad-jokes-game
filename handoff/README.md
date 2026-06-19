@@ -54,7 +54,7 @@ Theme is switched by setting `data-theme="light"` on a wrapper (or `<html>`). Da
   - *Bold:* weight 800–900, tight tracking (`-.02em`), large.
   - *Elevated:* weight 300, wide tracking (`.12–.14em`), uppercase.
 - **Body/UI:** `Hanken Grotesk` (300–700). Use `tabular-nums` for dates, times, counts, money.
-- Wordmark "MARLY'S / YARD": Archivo, letter-spacing `.18–.5em`.
+- Wordmark lockup: **BLACK CAFE** (primary) + **@ MARLY'S YARD** (location, muted). Crest carries it as BLACK CAFE (ring top) → vine → MARLY'S / YARD. Archivo, letter-spacing `.14–.18em`. Domain: **blackcafe.miami**.
 - Scale: Display 48–72 / H1 36–44 / H2 28–32 / H3 22 / Body 16–18 / Label 12 (uppercase, `.22–.28em`).
 
 ### Spacing / shape

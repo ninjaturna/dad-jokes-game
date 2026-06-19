@@ -343,7 +343,7 @@ class Component extends DCLogic {
       hasPolls: polls.length>0, pollsLine: polls.join(' · '),
       hasLinks: linkChips.length>0, linkChips,
       hasParking: s.parking.trim().length>0, parkingShown:s.parking,
-      shortLink: 'marlys.yard/e/' + (s.title.trim()? s.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,16) : 'new'),
+      shortLink: 'blackcafe.miami/e/' + (s.title.trim()? s.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,16) : 'new'),
       copyLabel: s.copied ? 'Copied ✓' : 'Copy',
       copyShare:()=>{ this.setState({copied:true}); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({copied:false}),1600); },
     };

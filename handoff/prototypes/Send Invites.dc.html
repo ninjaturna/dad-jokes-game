@@ -101,7 +101,7 @@
       <!-- EMAIL PREVIEW -->
       <sc-if value="{{ isEmail }}" hint-placeholder-val="{{ true }}">
         <div style="border:1px solid var(--p-border);border-radius:14px;overflow:hidden;background:var(--p-surface);box-shadow:var(--p-shadow)">
-          <div style="padding:12px 16px;border-bottom:1px solid var(--p-border);font-size:12px;color:var(--p-muted)"><span style="color:var(--p-text-2);font-weight:600">From</span> Marly’s Yard · <span style="color:var(--p-text-2);font-weight:600">Subj</span> You’re invited to the yard</div>
+          <div style="padding:12px 16px;border-bottom:1px solid var(--p-border);font-size:12px;color:var(--p-muted)"><span style="color:var(--p-text-2);font-weight:600">From</span> Black Cafe @ Marly’s Yard · <span style="color:var(--p-text-2);font-weight:600">Subj</span> You’re invited to the yard</div>
           <div style="padding:24px;background:{{ cardBg }}">
             <div style="text-align:center">
               <dc-import name="Crest" size="64" showWord="{{ false }}" ring="{{ cardCrest }}" vine="{{ cardVine }}" leaf="{{ cardLeaf }}" double="{{ false }}" hint-size="64px,64px"></dc-import>
@@ -192,7 +192,7 @@ class Component extends DCLogic {
       chk:L.sel?'✓':'',chkBg:L.sel?'var(--p-accent-2)':'transparent',chkBorder:L.sel?'var(--p-accent-2)':'var(--p-border)'}));
     const count=s.lists.filter(L=>L.sel).reduce((a,L)=>a+L.count,0);
 
-    const smsBody='You’re invited to Supper on the Patio 🌿 Sat Jun 28, 8 PM at The Yard. '+s.note.split('.')[0]+'. RSVP: marlys.yard/e/supper';
+    const smsBody='You’re invited to Supper on the Patio 🌿 Sat Jun 28, 8 PM at The Yard. '+s.note.split('.')[0]+'. RSVP: blackcafe.miami/e/supper';
 
     return {
       theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',

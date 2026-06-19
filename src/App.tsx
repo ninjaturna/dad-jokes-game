@@ -1,10 +1,11 @@
 import ThemeToggle from './components/ThemeToggle'
+import Wordmark from './components/brand/Wordmark'
 
 function App() {
   return (
     <div className="min-h-screen bg-bg-page text-text-primary">
       <header className="flex items-center justify-between px-6 py-5">
-        <span className="font-display font-semibold tracking-wordmark">MARLY&apos;S YARD</span>
+        <Wordmark variant="stacked" />
         <ThemeToggle />
       </header>
       <main className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 py-24 text-center">
