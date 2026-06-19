@@ -39,7 +39,7 @@ export default function CreateEvent() {
   const [copied, setCopied] = useState(false)
 
   const [f, setF] = useState<NewEventInput>({
-    title: '', date: '', time: '', timezone: 'America/New_York', place: '',
+    title: '', date: '', time: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
     tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'all',
     bringNote: '', wearNote: '', parkingNote: '',
     links: [{ label: '', url: '' }],

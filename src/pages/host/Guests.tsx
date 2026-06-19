@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import {
-  getContacts, addContact, getLists, createList, toggleListMember,
+  getContacts, addContact, getLists, createList, updateList, toggleListMember,
   getPendingRsvps, setRsvpStatus,
   type Contact, type ListWithMembers, type PendingRsvp,
 } from '../../lib/guests'
@@ -18,6 +18,25 @@ function avatarColor(i: number) { return AVATAR_COLORS[i % AVATAR_COLORS.length]
 
 type Tab = 'lists' | 'all' | 'pending'
 
+function parseCSV(text: string): Array<{ name: string; email?: string; phone?: string }> {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+  const first = lines[0]?.toLowerCase() ?? ''
+  const hasHeader = first.includes('name') || first.includes('email') || first.includes('first')
+  const dataLines = hasHeader ? lines.slice(1) : lines
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const phoneRe = /^[\d\s\+\-\(\)]{7,}$/
+  return dataLines.flatMap((line) => {
+    const parts = line.split(',').map((p) => p.trim().replace(/^"|"$/g, ''))
+    const [a, b, c] = parts
+    if (!a) return []
+    let name = a, email: string | undefined, phone: string | undefined
+    if (b && emailRe.test(b)) { email = b; phone = c && phoneRe.test(c) ? c : undefined }
+    else if (b && phoneRe.test(b)) { phone = b; email = c && emailRe.test(c) ? c : undefined }
+    else if (b) { name = `${a} ${b}`.trim() }
+    return [{ name, email, phone }]
+  })
+}
+
 export default function Guests() {
   const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('lists')
@@ -30,6 +49,10 @@ export default function Guests() {
   const [newEmail, setNewEmail] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [addingContact, setAddingContact] = useState(false)
+  const [editListId, setEditListId] = useState<string | null>(null)
+  const [editListName, setEditListName] = useState('')
+  const [importStatus, setImportStatus] = useState<string | null>(null)
+  const csvInputRef = useRef<HTMLInputElement>(null)
 
   const reload = useCallback(async () => {
     if (!user) return
@@ -61,6 +84,32 @@ export default function Guests() {
     if (!addListId) return
     await toggleListMember(addListId, guestId, isMember)
     await reload()
+  }
+
+  async function handleRenameList(listId: string) {
+    const name = editListName.trim()
+    if (!name) { setEditListId(null); return }
+    await updateList(listId, name)
+    setEditListId(null)
+    await reload()
+  }
+
+  async function handleCSVImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    e.target.value = ''
+    setImportStatus('Importing…')
+    try {
+      const text = await file.text()
+      const rows = parseCSV(text)
+      if (!rows.length) { setImportStatus('No contacts found in file.'); return }
+      await Promise.all(rows.map((r) => addContact(user.id, r)))
+      await reload()
+      setImportStatus(`${rows.length} contact${rows.length === 1 ? '' : 's'} imported.`)
+    } catch {
+      setImportStatus('Import failed — check your CSV format.')
+    }
+    setTimeout(() => setImportStatus(null), 4000)
   }
 
   async function handleApprove(id: string) {
@@ -107,10 +156,11 @@ export default function Guests() {
             <h1 className="font-display font-extrabold text-[32px] tracking-[-0.02em] m-0">Guest book</h1>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <button disabled
-              className="flex items-center gap-2 border border-border font-sans text-[13px] font-semibold px-4 py-[11px] rounded-[8px] opacity-50 cursor-not-allowed"
+            <input ref={csvInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCSVImport} />
+            <button onClick={() => csvInputRef.current?.click()}
+              className="flex items-center gap-2 border border-border font-sans text-[13px] font-semibold px-4 py-[11px] rounded-[8px] cursor-pointer"
               style={{ background: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}>
-              <span className="text-[15px]">↧</span> Import from Contacts
+              <span className="text-[15px]">↧</span> Import CSV
             </button>
             <button onClick={() => setShowAddForm((v) => !v)}
               className="flex items-center gap-2 border border-border text-text-primary font-sans text-[13px] font-semibold px-4 py-[11px] rounded-[8px] cursor-pointer"
@@ -119,6 +169,14 @@ export default function Guests() {
             </button>
           </div>
         </div>
+
+        {/* Import status */}
+        {importStatus && (
+          <div className="mb-4 text-[13px] font-semibold px-4 py-2.5 rounded-[8px]"
+            style={{ background: 'color-mix(in srgb, var(--accent-2) 14%, transparent)', border: '1px solid var(--accent-2)', color: 'var(--accent-2)' }}>
+            {importStatus}
+          </div>
+        )}
 
         {/* Add contact form */}
         {showAddForm && (
@@ -181,12 +239,34 @@ export default function Guests() {
               const color = LIST_COLORS[i % LIST_COLORS.length]
               const shown = l.members.slice(0, 4)
               const extra = l.members.length - shown.length
+              const isEditing = editListId === l.id
               return (
                 <div key={l.id} className="border border-border rounded-[14px] p-5"
                   style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
                   <div className="flex items-center gap-[11px] mb-[14px]">
                     <span className="flex-none w-3 h-3 rounded-[4px]" style={{ background: color }} />
-                    <span className="font-display font-bold text-[17px] flex-1 min-w-0 truncate">{l.name}</span>
+                    {isEditing ? (
+                      <input
+                        autoFocus
+                        value={editListName}
+                        onChange={(e) => setEditListName(e.target.value)}
+                        onBlur={() => handleRenameList(l.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleRenameList(l.id)
+                          if (e.key === 'Escape') setEditListId(null)
+                        }}
+                        className="font-display font-bold text-[17px] flex-1 min-w-0 bg-transparent border-b outline-none"
+                        style={{ borderColor: color, color: 'var(--text-primary)' }}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => { setEditListId(l.id); setEditListName(l.name) }}
+                        className="font-display font-bold text-[17px] flex-1 min-w-0 truncate text-left bg-transparent border-none cursor-text p-0"
+                        style={{ color: 'var(--text-primary)' }}
+                        title="Click to rename">
+                        {l.name}
+                      </button>
+                    )}
                     <span className="text-[12.5px] tabular whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{l.members.length} people</span>
                   </div>
                   <div className="flex mb-4 min-h-[30px]">

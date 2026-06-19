@@ -31,6 +31,11 @@ export async function createList(hostId: string, name: string): Promise<string> 
   return data.id as string
 }
 
+export async function updateList(listId: string, name: string) {
+  const { error } = await supabase.from('lists').update({ name: name.trim() || 'New list' }).eq('id', listId)
+  if (error) throw error
+}
+
 export async function toggleListMember(listId: string, guestId: string, isMember: boolean) {
   if (isMember) await supabase.from('list_members').delete().eq('list_id', listId).eq('guest_id', guestId)
   else await supabase.from('list_members').insert({ list_id: listId, guest_id: guestId })

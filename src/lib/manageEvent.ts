@@ -31,6 +31,12 @@ export async function getDatePoll(eventId: string): Promise<DatePoll | null> {
   }
 }
 
+export async function createDatePoll(eventId: string): Promise<string> {
+  const { data, error } = await supabase.from('polls').insert({ event_id: eventId, type: 'date', status: 'open' }).select('id').single()
+  if (error) throw error
+  return data.id as string
+}
+
 export async function addDateOption(pollId: string, label: string, sort: number) {
   await supabase.from('poll_options').insert({ poll_id: pollId, label, sort })
 }
@@ -52,4 +58,9 @@ export async function addPotluckSlot(eventId: string, title: string) {
 
 export async function toggleClaim(slot: Slot, name: string) {
   await supabase.from('potluck_slots').update({ claimed_by_name: slot.claimed_by_name ? null : name }).eq('id', slot.id)
+}
+
+export async function updatePotluckEnabled(eventId: string, enabled: boolean) {
+  const { error } = await supabase.from('events').update({ potluck_enabled: enabled }).eq('id', eventId)
+  if (error) throw error
 }
