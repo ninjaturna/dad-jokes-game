@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#481427;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 12px 30px rgba(12,1,3,.5); --p-field:#2C0710;
+  }
+  [data-theme="light"]{
+    --p-bg:#F5EFE7; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 12px 28px rgba(38,3,6,.10); --p-field:#FFFFFF;
+  }
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased">
+
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:color-mix(in srgb,var(--p-bg) 84%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--p-border)">
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="Host Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;color:var(--p-text-2);text-decoration:none;font-size:13px"><span style="font-size:16px">‹</span> Dashboard</a>
+      <span style="color:var(--p-border)">/</span><span style="font-size:13px;font-weight:600">Community</span>
+    </div>
+    <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);border-radius:999px;padding:7px 13px;font-family:'Hanken Grotesk';font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }}</button>
+  </div>
+
+  <!-- banner -->
+  <div style="position:relative;overflow:hidden;border-bottom:1px solid var(--p-border)">
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(125deg,#2B0610,#2B0610 16px,#330a16 16px,#330a16 32px)"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 0%, color-mix(in srgb,var(--p-candle) 24%, transparent), transparent 60%)"></div>
+    <div style="position:relative;max-width:720px;margin:0 auto;padding:34px 28px 26px;display:flex;align-items:center;gap:18px">
+      <dc-import name="Crest" size="64" showWord="{{ false }}" double="{{ false }}" hint-size="64px,64px"></dc-import>
+      <div style="flex:1">
+        <div style="font-size:11px;letter-spacing:.26em;color:var(--p-candle);font-weight:600;margin-bottom:7px">THE COMMUNITY · MEMBERS ONLY</div>
+        <h1 style="font-family:'Archivo';font-weight:800;font-size:30px;letter-spacing:-.02em;margin:0">Marly’s Yard</h1>
+        <div style="font-size:13.5px;color:var(--p-text-2);margin-top:5px;font-variant-numeric:tabular-nums">214 members · always on, between gatherings</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:720px;margin:0 auto;padding:22px 28px 90px">
+    <!-- tabs -->
+    <div style="display:flex;gap:4px;background:var(--p-surface);border:1px solid var(--p-border);border-radius:10px;padding:4px;margin-bottom:24px;width:max-content">
+      <button onClick="{{ tabFeed }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-size:13.5px;font-weight:600;padding:9px 20px;border-radius:7px;border:none;background:{{ feedTabBg }};color:{{ feedTabFg }}">Feed</button>
+      <button onClick="{{ tabPhotos }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-size:13.5px;font-weight:600;padding:9px 20px;border-radius:7px;border:none;background:{{ photosTabBg }};color:{{ photosTabFg }}">Photos</button>
+      <button onClick="{{ tabPlaylist }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-size:13.5px;font-weight:600;padding:9px 20px;border-radius:7px;border:none;background:{{ playTabBg }};color:{{ playTabFg }}">Playlist</button>
+    </div>
+
+    <!-- FEED -->
+    <sc-if value="{{ isFeed }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:12px;margin-bottom:22px">
+        <span style="flex:none;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#D96B43,#A62F24);display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:15px">T</span>
+        <div style="flex:1;display:flex;gap:10px">
+          <input value="{{ draft }}" onInput="{{ onDraft }}" placeholder="Share something with the yard…" style="flex:1;min-width:0;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;padding:12px 15px;border-radius:10px;outline:none" style-focus="border-color:var(--p-accent)"/>
+          <button onClick="{{ post }}" style="cursor:pointer;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-size:14px;font-weight:700;padding:12px 20px;border-radius:10px">Post</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ feed }}" as="m" hint-placeholder-count="3">
+          <div style="background:var(--p-surface);border:1px solid {{ m.border }};border-radius:14px;padding:18px 20px;box-shadow:var(--p-shadow)">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px">
+              <span style="flex:none;width:38px;height:38px;border-radius:50%;background:{{ m.color }};display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:14px">{{ m.initials }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:8px">{{ m.name }}<sc-if value="{{ m.pinned }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#260306;background:var(--p-candle);padding:2px 8px;border-radius:999px;white-space:nowrap">PINNED</span></sc-if></div><div style="font-size:12px;color:var(--p-muted)">{{ m.time }}</div></div>
+            </div>
+            <div style="font-size:15px;line-height:1.55;color:var(--p-text);margin-bottom:13px">{{ m.body }}</div>
+            <div style="display:flex;align-items:center;gap:18px">
+              <button onClick="{{ m.like }}" style="cursor:pointer;background:transparent;border:none;color:{{ m.likeColor }};font-family:'Hanken Grotesk';font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;padding:0">♥ {{ m.likes }}</button>
+              <span style="font-size:13px;color:var(--p-muted)">💬 {{ m.replies }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- PHOTOS -->
+    <sc-if value="{{ isPhotos }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:13.5px;color:var(--p-text-2)"><strong style="color:var(--p-text)">{{ photoCount }} photos</strong> from {{ contributorCount }} guests</div>
+        <button style="cursor:pointer;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-size:13px;font-weight:700;padding:10px 16px;border-radius:8px">+ Add photos</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <button style="cursor:pointer;aspect-ratio:1;border-radius:12px;border:1px dashed var(--p-border);background:transparent;color:var(--p-text-2);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><span style="font-size:24px;font-weight:300">+</span>Drop photos</button>
+        <sc-for list="{{ photos }}" as="ph" hint-placeholder-count="8">
+          <div style="position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:{{ ph.bg }}"><div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(0,0,0,.06),rgba(0,0,0,.06) 9px,rgba(255,255,255,.04) 9px,rgba(255,255,255,.04) 18px)"></div><div style="position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:6px"><span style="width:20px;height:20px;border-radius:50%;background:{{ ph.color }};border:1.5px solid rgba(255,255,255,.5)"></span></div></div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- PLAYLIST -->
+    <sc-if value="{{ isPlaylist }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#590242,#2B0A18);border-radius:14px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--p-shadow)">
+        <span style="flex:none;width:48px;height:48px;border-radius:10px;background:rgba(93,202,165,.2);border:1px solid rgba(93,202,165,.5);display:flex;align-items:center;justify-content:center;font-size:20px;color:#5DCAA5">♫</span>
+        <div style="flex:1"><div style="font-size:11px;letter-spacing:.16em;color:#7FD3B4;font-weight:600">NOW PLAYING</div><div style="font-family:'Archivo';font-weight:700;font-size:16px;color:#FBEFE6;margin-top:2px">Didn’t Cha Know — Erykah Badu</div></div>
+        <span style="font-size:12px;color:#E8D3BF;font-variant-numeric:tabular-nums">{{ trackCount }} tracks · {{ contributorCount }} added</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <input value="{{ trackDraft }}" onInput="{{ onTrackDraft }}" placeholder="Add a track — Title — Artist" style="flex:1;min-width:0;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:14px;padding:12px 15px;border-radius:10px;outline:none" style-focus="border-color:var(--p-accent-2)"/>
+        <button onClick="{{ addTrack }}" style="cursor:pointer;background:var(--p-accent-2);color:#260306;border:none;font-family:'Hanken Grotesk';font-size:14px;font-weight:700;padding:12px 20px;border-radius:10px">Add</button>
+      </div>
+      <div style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;overflow:hidden">
+        <sc-for list="{{ tracks }}" as="tr" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--p-border)">
+            <span style="flex:none;font-family:'Archivo';font-weight:800;font-size:13px;color:var(--p-muted);width:22px;font-variant-numeric:tabular-nums">{{ tr.num }}</span>
+            <div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600">{{ tr.title }}</div><div style="font-size:12.5px;color:var(--p-muted)">{{ tr.artist }}</div></div>
+            <span style="flex:none;width:26px;height:26px;border-radius:50%;background:{{ tr.color }};display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:10px" title="{{ tr.by }}">{{ tr.byInitials }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:720,&quot;height&quot;:820},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme:'dark', tab:'feed', draft:'', trackDraft:'',
+    feed:[
+      {id:1,name:'Tam',color:'#D96B43',time:'Pinned · 2d ago',pinned:true,body:'Next supper is locked for Jun 28 🌿 12 seats, RSVP’s open. Bring someone interesting.',likes:24,replies:6,liked:false},
+      {id:2,name:'Keisha Brown',color:'#315955',time:'5h ago',pinned:false,body:'Still thinking about that snapper from last month. Who’s on sides this time?',likes:9,replies:3,liked:false},
+      {id:3,name:'Andre Louis',color:'#A67244',time:'1d ago',pinned:false,body:'Dropped a few records in the playlist for the listening session 🎧',likes:14,replies:2,liked:false},
+    ],
+    photos:[
+      {bg:'linear-gradient(135deg,#733122,#A62F24)',color:'#D96B43'},
+      {bg:'linear-gradient(135deg,#315955,#5DCAA5)',color:'#5DCAA5'},
+      {bg:'linear-gradient(135deg,#590242,#A62F24)',color:'#E0A867'},
+      {bg:'linear-gradient(135deg,#3A0A12,#733122)',color:'#A67244'},
+      {bg:'linear-gradient(135deg,#403513,#A67244)',color:'#5DCAA5'},
+      {bg:'linear-gradient(135deg,#A62F24,#D96B43)',color:'#315955'},
+      {bg:'linear-gradient(135deg,#2B0A18,#590242)',color:'#D96B43'},
+      {bg:'linear-gradient(135deg,#315955,#403513)',color:'#E0A867'},
+    ],
+    tracks:[
+      {title:'Didn’t Cha Know',artist:'Erykah Badu',by:'Andre Louis',color:'#A67244'},
+      {title:'Brown Sugar',artist:'D’Angelo',by:'Tam',color:'#D96B43'},
+      {title:'Cranes in the Sky',artist:'Solange',by:'Keisha Brown',color:'#315955'},
+      {title:'Get You',artist:'Daniel Caesar',by:'Naomi S.',color:'#590242'},
+      {title:'Liability',artist:'Lorde',by:'Sofia Reyes',color:'#5DCAA5'},
+    ],
+  };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+  initials(n){ return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+  renderVals(){
+    const s=this.state;
+    const tb=(t)=>({bg:s.tab===t?'var(--p-accent)':'transparent',fg:s.tab===t?'#fff':'var(--p-text-2)'});
+    const f=tb('feed'),p=tb('photos'),pl=tb('playlist');
+    const feed=s.feed.map(m=>({name:m.name,color:m.color,initials:this.initials(m.name),time:m.time,pinned:m.pinned,body:m.body,
+      likes:m.likes,replies:m.replies, border:m.pinned?'var(--p-candle)':'var(--p-border)',
+      likeColor:m.liked?'var(--p-accent)':'var(--p-muted)',
+      like:()=>this.setState(st=>({feed:st.feed.map(x=>x.id===m.id?{...x,liked:!x.liked,likes:x.liked?x.likes-1:x.likes+1}:x)}))}));
+    const tracks=s.tracks.map((t,i)=>({num:String(i+1).padStart(2,'0'),title:t.title,artist:t.artist,by:t.by,byInitials:this.initials(t.by),color:t.color}));
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(x=>({theme:x.theme==='dark'?'light':'dark'})),
+      tabFeed:()=>this.setState({tab:'feed'}), tabPhotos:()=>this.setState({tab:'photos'}), tabPlaylist:()=>this.setState({tab:'playlist'}),
+      feedTabBg:f.bg,feedTabFg:f.fg, photosTabBg:p.bg,photosTabFg:p.fg, playTabBg:pl.bg,playTabFg:pl.fg,
+      isFeed:s.tab==='feed', isPhotos:s.tab==='photos', isPlaylist:s.tab==='playlist',
+      feed, draft:s.draft, onDraft:(e)=>this.setState({draft:e.target.value}),
+      post:()=>{ const v=s.draft.trim(); if(!v) return; this.setState(st=>({feed:[st.feed[0],{id:Date.now(),name:'Tam',color:'#D96B43',time:'Just now',pinned:false,body:v,likes:0,replies:0,liked:false},...st.feed.slice(1)],draft:''})); },
+      photos:s.photos, photoCount:s.photos.length+128, contributorCount:31,
+      tracks, trackCount:s.tracks.length, trackDraft:s.trackDraft, onTrackDraft:(e)=>this.setState({trackDraft:e.target.value}),
+      addTrack:()=>{ const v=s.trackDraft.trim(); if(!v) return; const [title,artist]=v.split('—').map(x=>x.trim()); this.setState(st=>({tracks:[...st.tracks,{title:title||v,artist:artist||'Added by you',by:'You',color:'#E0A867'}],trackDraft:''})); },
+    };
+  }
+}
+</script>
+</body>
+</html>

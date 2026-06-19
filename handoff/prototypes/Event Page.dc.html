@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#590242;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-danger:#E0705F; --p-candle:#E0A867; --p-shadow:0 14px 34px rgba(15,1,3,.55);
+    --p-field:#2C0710; --p-scrim:rgba(38,3,6,.78);
+  }
+  [data-theme="light"]{
+    --p-bg:#FAFBF5; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-danger:#A62F24; --p-candle:#A67244; --p-shadow:0 14px 30px rgba(38,3,6,.12);
+    --p-field:#FFFFFF; --p-scrim:rgba(38,3,6,.5);
+  }
+  @keyframes my-glow{0%,100%{opacity:.5}50%{opacity:.78}}
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;position:relative;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased;overflow-x:hidden">
+
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:overlay;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22/></filter><rect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/></svg>')"></div>
+  <div style="position:absolute;top:-220px;left:50%;transform:translateX(-50%);width:820px;height:560px;background:radial-gradient(ellipse at center, color-mix(in srgb,var(--p-candle) 34%, transparent), transparent 70%);filter:blur(24px);animation:my-glow 8s ease-in-out infinite;pointer-events:none;z-index:0"></div>
+
+  <!-- top bar -->
+  <div style="position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:20px 24px;max-width:1100px;margin:0 auto">
+    <a href="Landing.dc.html" style="display:flex;align-items:center;gap:8px;color:var(--p-text-2);text-decoration:none;font-size:13px;letter-spacing:.04em"><span style="font-size:16px">‹</span> the Yard</a>
+    <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;background:transparent;color:var(--p-text);border:1px solid var(--p-border);border-radius:999px;padding:7px 15px;font-family:'Hanken Grotesk';font-size:12px;font-weight:600">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle);display:inline-block"></span>{{ themeLabel }}
+    </button>
+  </div>
+
+  <!-- invitation column -->
+  <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;padding:24px 24px 90px">
+
+    <div style="text-align:center;margin-bottom:26px">
+      <dc-import name="Crest" size="76" showWord="{{ false }}" ringWidth="{{ 1.25 }}" hint-size="76px,76px"></dc-import>
+      <div style="font-size:11px;letter-spacing:.34em;color:var(--p-muted);font-weight:600;margin-top:14px">YOU’RE INVITED · MARLY’S YARD</div>
+    </div>
+
+    <!-- event image -->
+    <div style="position:relative;border-radius:14px;overflow:hidden;box-shadow:var(--p-shadow);margin-bottom:30px;aspect-ratio:16/10">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#3A0A12,#3A0A12 12px,#451320 12px,#451320 24px)"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top, var(--p-scrim), transparent 55%)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;height:100%"><span style="font-family:'Archivo';font-size:11px;letter-spacing:.18em;color:rgba(242,228,214,.6)">[ EVENT PHOTO · golden-hour, greenery, the pergola ]</span></div>
+      <div style="position:absolute;top:16px;left:16px;background:var(--p-accent);color:#fff;font-size:11px;font-weight:700;letter-spacing:.14em;padding:6px 12px;border-radius:999px;white-space:nowrap">3 SEATS LEFT</div>
+    </div>
+
+    <!-- title block -->
+    <div style="text-align:center;margin-bottom:30px">
+      <div style="font-size:12px;letter-spacing:.28em;color:var(--p-accent);font-weight:700;margin-bottom:16px">SUPPER CLUB · NO. 14</div>
+      <h1 style="font-family:'Archivo';font-weight:800;font-size:clamp(38px,8vw,58px);line-height:1.02;letter-spacing:-.02em;margin:0 0 6px">Supper on<br>the Patio</h1>
+      <p style="font-family:'Archivo';font-weight:300;font-size:18px;letter-spacing:.14em;color:var(--p-text-2);margin:14px 0 0;text-transform:uppercase">A long table · low light · in season</p>
+    </div>
+
+    <!-- meta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--p-border);border:1px solid var(--p-border);border-radius:12px;overflow:hidden;margin-bottom:26px">
+      <div style="background:var(--p-surface);padding:18px 20px"><div style="font-size:11px;letter-spacing:.18em;color:var(--p-muted);font-weight:600;margin-bottom:6px">WHEN</div><div style="font-weight:600;font-size:16px;font-variant-numeric:tabular-nums">Sat · Jun 28</div><div style="font-size:14px;color:var(--p-text-2);font-variant-numeric:tabular-nums">8:00 PM – late</div></div>
+      <div style="background:var(--p-surface);padding:18px 20px"><div style="font-size:11px;letter-spacing:.18em;color:var(--p-muted);font-weight:600;margin-bottom:6px">WHERE</div><div style="font-weight:600;font-size:16px">The Yard</div><div style="font-size:14px;color:var(--p-text-2)">Little Haiti, Miami</div></div>
+    </div>
+
+    <!-- host note -->
+    <div style="display:flex;gap:16px;align-items:flex-start;background:var(--p-surface-2);border-radius:12px;padding:22px 24px;margin-bottom:30px;box-shadow:var(--p-shadow)">
+      <span style="flex:none;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#D96B43,#A62F24);display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:18px">T</span>
+      <div>
+        <div style="font-size:12px;letter-spacing:.12em;color:var(--p-candle);font-weight:600;margin-bottom:7px">A NOTE FROM TAM</div>
+        <p style="margin:0;font-size:15.5px;line-height:1.62;color:var(--p-text)">Pull up a chair. We’re doing a slow dinner under the vines — bring your appetite and someone interesting. Doors at eight, we eat at nine.</p>
+      </div>
+    </div>
+
+    <!-- RSVP -->
+    <div style="border:1px solid var(--p-border);border-radius:14px;padding:26px;background:var(--p-surface);box-shadow:var(--p-shadow);margin-bottom:24px">
+      <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:14px 8px">
+          <dc-import name="Crest" size="84" showWord="{{ false }}" ring="#5DCAA5" vine="#5DCAA5" leaf="#E0A867" double="{{ false }}" hint-size="84px,84px"></dc-import>
+          <h3 style="font-family:'Archivo';font-weight:800;font-size:30px;margin:12px 0 6px;letter-spacing:-.01em">You’re in.</h3>
+          <p style="font-size:15px;color:var(--p-text-2);margin:0 0 20px">See you in the yard{{ nameSuffix }}. We’ll text the details.</p>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <a href="#" style="text-decoration:none;background:transparent;border:1px solid var(--p-muted);color:var(--p-text);font-weight:600;font-size:13px;padding:11px 18px;border-radius:8px">Add to calendar</a>
+            <button onClick="{{ reset }}" style="cursor:pointer;background:transparent;border:none;color:var(--p-accent-2);font-family:'Hanken Grotesk';font-weight:600;font-size:13px;padding:11px 12px">Change response</button>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notSent }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-family:'Archivo';font-weight:700;font-size:19px;margin-bottom:4px">Will you be there?</div>
+          <div style="font-size:13px;color:var(--p-muted);margin-bottom:18px">No account needed · RSVP by Thu Jun 26</div>
+          <input value="{{ name }}" onInput="{{ onName }}" placeholder="Your name" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;padding:14px 16px;border-radius:8px;outline:none;margin-bottom:14px" style-focus="border-color:var(--p-accent)"/>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+            <button onClick="{{ pickYes }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:700;font-size:15px;padding:16px 6px;border-radius:8px;border:1.5px solid {{ yesBorder }};background:{{ yesBg }};color:{{ yesFg }}">Yes</button>
+            <button onClick="{{ pickMaybe }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:700;font-size:15px;padding:16px 6px;border-radius:8px;border:1.5px solid {{ maybeBorder }};background:{{ maybeBg }};color:{{ maybeFg }}">Maybe</button>
+            <button onClick="{{ pickNo }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:700;font-size:15px;padding:16px 6px;border-radius:8px;border:1.5px solid {{ noBorder }};background:{{ noBg }};color:{{ noFg }}">Can’t</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <span style="font-size:14px;color:var(--p-text-2)">Bringing anyone?</span>
+            <div style="display:flex;align-items:center;gap:14px">
+              <button onClick="{{ decPlus }}" style="cursor:pointer;width:36px;height:36px;border-radius:8px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:18px;line-height:1">–</button>
+              <span style="font-family:'Archivo';font-weight:700;font-size:18px;min-width:40px;text-align:center;font-variant-numeric:tabular-nums">+{{ plus }}</span>
+              <button onClick="{{ incPlus }}" style="cursor:pointer;width:36px;height:36px;border-radius:8px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:18px;line-height:1">+</button>
+            </div>
+          </div>
+          <button onClick="{{ submit }}" style="cursor:pointer;width:100%;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-weight:700;font-size:16px;padding:16px;border-radius:8px;box-shadow:var(--p-shadow)" style-hover="filter:brightness(1.08)">{{ submitLabel }}</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- guests -->
+    <div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:30px">
+      <div style="display:flex">
+        <span style="width:30px;height:30px;border-radius:50%;background:#D96B43;border:2px solid var(--p-bg)"></span>
+        <span style="width:30px;height:30px;border-radius:50%;background:#5DCAA5;border:2px solid var(--p-bg);margin-left:-9px"></span>
+        <span style="width:30px;height:30px;border-radius:50%;background:#A67244;border:2px solid var(--p-bg);margin-left:-9px"></span>
+        <span style="width:30px;height:30px;border-radius:50%;background:#315955;border:2px solid var(--p-bg);margin-left:-9px"></span>
+        <span style="width:30px;height:30px;border-radius:50%;background:var(--p-surface-2);border:2px solid var(--p-bg);margin-left:-9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--p-text-2)">+5</span>
+      </div>
+      <span style="font-size:14px;color:var(--p-text-2);font-variant-numeric:tabular-nums">9 going · 3 seats left</span>
+    </div>
+
+    <!-- details -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:11px;letter-spacing:.16em;color:var(--p-muted);font-weight:600;margin-bottom:7px">BRING</div><div style="font-size:14.5px;line-height:1.5;color:var(--p-text)">A bottle, if you like. We’ve got the rest.</div></div>
+      <div style="border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:11px;letter-spacing:.16em;color:var(--p-muted);font-weight:600;margin-bottom:7px">WEAR</div><div style="font-size:14.5px;line-height:1.5;color:var(--p-text)">Whatever feels good. It’s a backyard.</div></div>
+    </div>
+
+    <div style="display:flex;gap:18px;justify-content:center;margin-top:26px">
+      <a href="#" style="color:var(--p-accent-2);text-decoration:none;font-size:14px;font-weight:600">Add to calendar</a>
+      <span style="color:var(--p-border)">·</span>
+      <a href="#" style="color:var(--p-accent-2);text-decoration:none;font-size:14px;font-weight:600">View map</a>
+      <span style="color:var(--p-border)">·</span>
+      <a href="#" style="color:var(--p-accent-2);text-decoration:none;font-size:14px;font-weight:600">Share</a>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:760,&quot;height&quot;:900},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { theme: 'dark', name: '', plus: 0, rsvp: null, sent: false };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+  pick(v){ this.setState({ rsvp: v }); }
+  renderVals(){
+    const s=this.state;
+    const seg=(k)=>{const on=s.rsvp===k;const c={yes:'#5DCAA5',maybe:'#E0A867',no:'#E0705F'}[k];return{bg:on?c:'var(--p-field)',fg:on?'#260306':'var(--p-text)',border:on?c:'var(--p-border)'};};
+    const y=seg('yes'),m=seg('maybe'),n=seg('no');
+    const nm=s.name.trim();
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      name:s.name, plus:s.plus, sent:s.sent, notSent:!s.sent,
+      nameSuffix:nm?(', '+nm):'',
+      onName:(e)=>this.setState({name:e.target.value}),
+      pickYes:()=>this.pick('yes'), pickMaybe:()=>this.pick('maybe'), pickNo:()=>this.pick('no'),
+      incPlus:()=>this.setState(p=>({plus:Math.min(5,p.plus+1)})),
+      decPlus:()=>this.setState(p=>({plus:Math.max(0,p.plus-1)})),
+      submit:()=>{ if(s.rsvp) this.setState({sent:true}); },
+      reset:()=>this.setState({sent:false}),
+      submitLabel:s.rsvp?"I'm in":'Pick a response',
+      yesBg:y.bg,yesFg:y.fg,yesBorder:y.border,
+      maybeBg:m.bg,maybeFg:m.fg,maybeBorder:m.border,
+      noBg:n.bg,noFg:n.fg,noBorder:n.border,
+    };
+  }
+}
+</script>
+</body>
+</html>

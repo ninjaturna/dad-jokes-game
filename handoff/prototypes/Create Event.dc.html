@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#481427;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 12px 30px rgba(12,1,3,.5); --p-field:#2C0710;
+  }
+  [data-theme="light"]{
+    --p-bg:#F5EFE7; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 12px 28px rgba(38,3,6,.10); --p-field:#FFFFFF;
+  }
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased">
+
+  <!-- top bar -->
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:color-mix(in srgb,var(--p-bg) 84%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--p-border)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="Host Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;color:var(--p-text-2);text-decoration:none;font-size:13px"><span style="font-size:16px">‹</span> Dashboard</a>
+      <span style="color:var(--p-border)">/</span>
+      <span style="font-size:13px;font-weight:600">New gathering</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);border-radius:999px;padding:7px 13px;font-family:'Hanken Grotesk';font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }}</button>
+      <button style="cursor:pointer;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:9px 16px;border-radius:8px">Save draft</button>
+      <button style="cursor:pointer;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;box-shadow:var(--p-shadow)" style-hover="filter:brightness(1.08)">Publish &amp; invite</button>
+    </div>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:32px 28px 80px;display:grid;grid-template-columns:1fr 392px;gap:36px;align-items:start">
+
+    <!-- FORM -->
+    <div style="display:flex;flex-direction:column;gap:26px;min-width:0">
+      <div>
+        <div style="font-size:12px;letter-spacing:.2em;color:var(--p-muted);font-weight:600;margin-bottom:8px">CREATE A GATHERING</div>
+        <h1 style="font-family:'Archivo';font-weight:800;font-size:34px;letter-spacing:-.02em;margin:0">Set the table.</h1>
+      </div>
+
+      <!-- BASICS -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:18px">The basics</div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--p-text-2);margin-bottom:7px">Event name</label>
+        <input value="{{ title }}" onInput="{{ onTitle }}" placeholder="e.g. Supper on the Patio" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Archivo';font-weight:600;font-size:18px;padding:14px 16px;border-radius:9px;outline:none;margin-bottom:18px" style-focus="border-color:var(--p-accent)"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+          <div><label style="display:block;font-size:12px;font-weight:600;color:var(--p-text-2);margin-bottom:7px">Date</label><input value="{{ date }}" onInput="{{ onDate }}" placeholder="Sat, Jun 28" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;padding:13px 15px;border-radius:8px;outline:none" style-focus="border-color:var(--p-accent)"/></div>
+          <div><label style="display:block;font-size:12px;font-weight:600;color:var(--p-text-2);margin-bottom:7px">Time</label><input value="{{ time }}" onInput="{{ onTime }}" placeholder="8:00 PM" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;padding:13px 15px;border-radius:8px;outline:none" style-focus="border-color:var(--p-accent)"/></div>
+        </div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--p-text-2);margin-bottom:7px">Location</label>
+        <input value="{{ place }}" onInput="{{ onPlace }}" placeholder="The Yard · Little Haiti, Miami" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;padding:13px 15px;border-radius:8px;outline:none" style-focus="border-color:var(--p-accent)"/>
+      </section>
+
+      <!-- CATEGORY -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:6px">Series &amp; tags</div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Group it under a recurring series so guests know what they’re walking into.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="5">
+            <button onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Hanken Grotesk';font-size:14px;font-weight:600;padding:10px 16px;border-radius:999px;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }}"><span style="width:9px;height:9px;border-radius:50%;background:{{ c.dot }}"></span>{{ c.name }}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- GUESTS -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'Archivo';font-weight:700;font-size:16px">Guest book</div>
+          <span style="font-size:13px;color:var(--p-accent-2);font-weight:600;font-variant-numeric:tabular-nums">{{ invitedCount }} selected</span>
+        </div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Tap to invite. New contacts from your phone are saved here automatically.</p>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <button style="cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--p-surface-2);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:10px 15px;border-radius:8px"><span style="font-size:15px">↧</span> Import from Contacts</button>
+          <button onClick="{{ selectAll }}" style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text-2);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:10px 15px;border-radius:8px">Select all</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto">
+          <sc-for list="{{ guests }}" as="g" hint-placeholder-count="6">
+            <button onClick="{{ g.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:13px;text-align:left;width:100%;padding:10px 13px;border-radius:10px;border:1px solid {{ g.border }};background:{{ g.bg }};font-family:'Hanken Grotesk'">
+              <span style="flex:none;width:34px;height:34px;border-radius:50%;background:{{ g.color }};display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:13px">{{ g.initials }}</span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-size:14.5px;font-weight:600;color:var(--p-text)">{{ g.name }}</span><span style="display:block;font-size:12px;color:var(--p-muted)">{{ g.contact }}</span></span>
+              <span style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid {{ g.checkBorder }};background:{{ g.checkBg }};display:flex;align-items:center;justify-content:center;color:#260306;font-size:13px;font-weight:800">{{ g.check }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- PLUS ONES + AUDIENCE -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:18px">Who can come</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--p-border)">
+          <div><div style="font-weight:600;font-size:15px">Allow plus-ones</div><div style="font-size:13px;color:var(--p-muted)">Guests can bring others</div></div>
+          <button onClick="{{ togglePlus }}" style="cursor:pointer;width:52px;height:30px;border-radius:999px;border:none;background:{{ plusTrackBg }};position:relative;transition:background .2s"><span style="position:absolute;top:3px;left:{{ plusKnobX }};width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></button>
+        </div>
+
+        <sc-if value="{{ plusAllowed }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--p-border)">
+            <div><div style="font-weight:600;font-size:15px">Max per guest</div><div style="font-size:13px;color:var(--p-muted)">How many extra they can add</div></div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <button onClick="{{ decMax }}" style="cursor:pointer;width:36px;height:36px;border-radius:9px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:18px">–</button>
+              <span style="font-family:'Archivo';font-weight:700;font-size:18px;min-width:30px;text-align:center;font-variant-numeric:tabular-nums">{{ plusMax }}</span>
+              <button onClick="{{ incMax }}" style="cursor:pointer;width:36px;height:36px;border-radius:9px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:18px">+</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="padding:16px 0 6px">
+          <div style="font-weight:600;font-size:15px;margin-bottom:12px">Who’s it for</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <button onClick="{{ audAll }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:600;font-size:14px;padding:14px 8px;border-radius:10px;border:1.5px solid {{ allBorder }};background:{{ allBg }};color:var(--p-text)">All ages</button>
+            <button onClick="{{ audKids }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:600;font-size:14px;padding:14px 8px;border-radius:10px;border:1.5px solid {{ kidsBorder }};background:{{ kidsBg }};color:var(--p-text)">Kid-friendly</button>
+            <button onClick="{{ audAdults }}" style="cursor:pointer;font-family:'Hanken Grotesk';font-weight:600;font-size:14px;padding:14px 8px;border-radius:10px;border:1.5px solid {{ adultsBorder }};background:{{ adultsBg }};color:var(--p-text)">Adults only</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- POLLS -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:6px">Ask the table</div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Auto-polls run with every RSVP — no setup.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onClick="{{ togglePollDiet }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:10px;border:1px solid {{ dietBorder }};background:{{ dietBg }};font-family:'Hanken Grotesk'"><span style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid {{ dietChkBorder }};background:{{ dietChkBg }};display:flex;align-items:center;justify-content:center;color:#260306;font-size:13px;font-weight:800">{{ dietChk }}</span><span><span style="display:block;font-weight:600;font-size:14.5px;color:var(--p-text)">Dietary restrictions</span><span style="display:block;font-size:12.5px;color:var(--p-muted)">Allergies, veg, etc.</span></span></button>
+          <button onClick="{{ togglePollDate }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:10px;border:1px solid {{ dateBorder }};background:{{ dateBg }};font-family:'Hanken Grotesk'"><span style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid {{ dateChkBorder }};background:{{ dateChkBg }};display:flex;align-items:center;justify-content:center;color:#260306;font-size:13px;font-weight:800">{{ dateChk }}</span><span><span style="display:block;font-weight:600;font-size:14.5px;color:var(--p-text)">Date poll</span><span style="display:block;font-size:12.5px;color:var(--p-muted)">Let guests vote on the night</span></span></button>
+          <button onClick="{{ togglePotluck }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:10px;border:1px solid {{ potBorder }};background:{{ potBg }};font-family:'Hanken Grotesk'"><span style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid {{ potChkBorder }};background:{{ potChkBg }};display:flex;align-items:center;justify-content:center;color:#260306;font-size:13px;font-weight:800">{{ potChk }}</span><span><span style="display:block;font-weight:600;font-size:14.5px;color:var(--p-text)">Potluck sign-up</span><span style="display:block;font-size:12.5px;color:var(--p-muted)">Guests claim what they’ll bring · manage slots after</span></span></button>
+        </div>
+      </section>
+
+      <!-- INFO PAGES -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+          <div style="font-family:'Archivo';font-weight:700;font-size:16px">Info pages</div>
+          <a href="Info Pages.dc.html" style="font-size:12.5px;color:var(--p-accent-2);text-decoration:none;font-weight:600">Open editor →</a>
+        </div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Add extra pages to the invite — itinerary, menu, track list, games.</p>
+        <sc-if value="{{ hasPages }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+            <sc-for list="{{ infoPages }}" as="ip" hint-placeholder-count="1">
+              <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:8px 12px;border-radius:999px;background:color-mix(in srgb,var(--p-accent-2) 14%, transparent);color:var(--p-text)"><span style="font-size:14px">{{ ip.icon }}</span>{{ ip.name }}<button onClick="{{ ip.remove }}" style="cursor:pointer;background:transparent;border:none;color:var(--p-muted);font-size:15px;padding:0;line-height:1">×</button></span>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ pageTypes }}" as="pt" hint-placeholder-count="5">
+            <button onClick="{{ pt.add }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:9px;border:1px dashed var(--p-border);background:transparent;color:var(--p-text);font-family:'Hanken Grotesk';font-size:13px;font-weight:600" style-hover="border-color:var(--p-accent)"><span style="font-size:14px">{{ pt.icon }}</span>{{ pt.name }}</button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- LINKS + PARKING -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:24px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:6px">Details &amp; links</div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Registry, playlist, menu — anything worth a tap.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+          <sc-for list="{{ links }}" as="l" hint-placeholder-count="1">
+            <div style="display:flex;gap:10px;align-items:center">
+              <input value="{{ l.label }}" onInput="{{ l.onLabel }}" placeholder="Label" style="width:130px;flex:none;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:14px;padding:11px 13px;border-radius:8px;outline:none" style-focus="border-color:var(--p-accent)"/>
+              <input value="{{ l.url }}" onInput="{{ l.onUrl }}" placeholder="https://" style="flex:1;min-width:0;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:14px;padding:11px 13px;border-radius:8px;outline:none" style-focus="border-color:var(--p-accent)"/>
+              <button onClick="{{ l.remove }}" style="cursor:pointer;flex:none;width:38px;height:38px;border-radius:8px;border:1px solid var(--p-border);background:transparent;color:var(--p-muted);font-size:16px">×</button>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ addLink }}" style="cursor:pointer;background:transparent;border:1px dashed var(--p-border);color:var(--p-text-2);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:11px 16px;border-radius:8px;width:100%">+ Add a link</button>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--p-text-2);margin:20px 0 7px">Parking &amp; arrival</label>
+        <textarea value="{{ parking }}" onInput="{{ onParking }}" rows="3" placeholder="Street parking on NE 2nd. Gate code 1948 — come round the back." style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:14.5px;line-height:1.5;padding:13px 15px;border-radius:8px;outline:none;resize:none" style-focus="border-color:var(--p-accent)"></textarea>
+      </section>
+    </div>
+
+    <!-- PREVIEW -->
+    <div style="position:sticky;top:84px;display:flex;flex-direction:column;gap:16px">
+      <div style="font-size:11px;letter-spacing:.22em;color:var(--p-muted);font-weight:700">LIVE PREVIEW</div>
+      <div style="border:1px solid var(--p-border);border-radius:16px;overflow:hidden;background:var(--p-surface);box-shadow:var(--p-shadow)">
+        <div style="height:118px;position:relative;background:repeating-linear-gradient(135deg,var(--p-surface-2),var(--p-surface-2) 11px,color-mix(in srgb,var(--p-surface-2) 70%, #000) 11px,color-mix(in srgb,var(--p-surface-2) 70%, #000) 22px)">
+          <div style="position:absolute;top:14px;left:14px;display:flex;align-items:center;gap:8px;background:{{ catTagBg }};color:{{ catTagFg }};font-size:11px;font-weight:700;letter-spacing:.06em;padding:6px 12px;border-radius:999px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ catDot }}"></span>{{ catLabel }}</div>
+        </div>
+        <div style="padding:22px 22px 24px">
+          <div style="font-size:11px;letter-spacing:.16em;color:var(--p-accent);font-weight:700;margin-bottom:8px;font-variant-numeric:tabular-nums">{{ whenLine }}</div>
+          <h2 style="font-family:'Archivo';font-weight:800;font-size:24px;letter-spacing:-.01em;margin:0 0 4px;color:var(--p-text)">{{ titleShown }}</h2>
+          <div style="font-size:13.5px;color:var(--p-text-2);margin-bottom:16px">{{ placeShown }}</div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--p-surface-2);color:var(--p-text-2);white-space:nowrap">{{ audienceBadge }}</span>
+            <span style="font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--p-surface-2);color:var(--p-text-2);white-space:nowrap">{{ plusBadge }}</span>
+            <span style="font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--p-surface-2);color:var(--p-text-2);white-space:nowrap;font-variant-numeric:tabular-nums">{{ invitedBadge }}</span>
+          </div>
+
+          <sc-if value="{{ hasPolls }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12px;color:var(--p-muted);border-top:1px solid var(--p-border);padding-top:13px;margin-bottom:10px">Will ask: {{ pollsLine }}</div>
+          </sc-if>
+          <sc-if value="{{ hasPages }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+              <sc-for list="{{ infoPages }}" as="ipv" hint-placeholder-count="1"><span style="font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--p-surface-2);color:var(--p-text-2);white-space:nowrap">{{ ipv.icon }} {{ ipv.name }}</span></sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasLinks }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+              <sc-for list="{{ linkChips }}" as="lc" hint-placeholder-count="1"><span style="font-size:13px;color:var(--p-accent-2);font-weight:600">↗ {{ lc.label }}</span></sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasParking }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;color:var(--p-text-2);line-height:1.5;border-top:1px solid var(--p-border);padding-top:13px"><span style="color:var(--p-muted);font-weight:600">Parking · </span>{{ parkingShown }}</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- share -->
+      <div style="border:1px solid var(--p-border);border-radius:14px;padding:18px;background:var(--p-surface)">
+        <div style="font-size:12px;font-weight:600;color:var(--p-text-2);margin-bottom:10px">Shareable link</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;min-width:0;background:var(--p-field);border:1px solid var(--p-border);border-radius:8px;padding:11px 13px;font-family:'Archivo';font-size:13.5px;color:var(--p-text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ shortLink }}</div>
+          <button onClick="{{ copyShare }}" style="cursor:pointer;flex:none;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-size:13px;font-weight:700;padding:11px 16px;border-radius:8px;white-space:nowrap">{{ copyLabel }}</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--p-muted);margin-top:10px">Opens the event page only — guests RSVP without an account.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme:'dark', title:'', date:'', time:'', place:'',
+    category:'supper',
+    plusAllowed:true, plusMax:1, audience:'all',
+    guests:[
+      {id:1,name:'Jordan Pierre',contact:'(305) 555-0142',color:'#D96B43',sel:true},
+      {id:2,name:'Mireille Joseph',contact:'mireille@…',color:'#5DCAA5',sel:true},
+      {id:3,name:'Andre Louis',contact:'(786) 555-0199',color:'#A67244',sel:false},
+      {id:4,name:'Keisha Brown',contact:'keisha@…',color:'#315955',sel:true},
+      {id:5,name:'Marcus Cadet',contact:'(305) 555-0177',color:'#A62F24',sel:false},
+      {id:6,name:'Naomi Saint-Fleur',contact:'naomi@…',color:'#590242',sel:false},
+    ],
+    links:[{label:'Playlist',url:'open.spotify.com/…'}],
+    pollDiet:true, pollDate:false, potluck:false,
+    parking:'', copied:false, infoPages:[],
+  };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+
+  initials(n){ return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+  renderVals(){
+    const s=this.state;
+    const cats=[
+      {id:'blackcafe',name:'Black Cafe',dot:'#D96B43'},
+      {id:'listening',name:'Listening Session',dot:'#5DCAA5'},
+      {id:'gamenight',name:'Game Night',dot:'#E0A867'},
+      {id:'supper',name:'Supper Club',dot:'#A62F24'},
+      {id:'brunch',name:'Garden Brunch',dot:'#A67244'},
+    ];
+    const categories=cats.map(c=>{
+      const on=s.category===c.id;
+      return {...c, pick:()=>this.setState({category:c.id}),
+        bg:on?'color-mix(in srgb,'+c.dot+' 20%, transparent)':'transparent',
+        border:on?c.dot:'var(--p-border)', fg:'var(--p-text)'};
+    });
+    const cat=cats.find(c=>c.id===s.category);
+
+    const guests=s.guests.map(g=>({
+      name:g.name, contact:g.contact, color:g.color, initials:this.initials(g.name),
+      toggle:()=>this.setState(st=>({guests:st.guests.map(x=>x.id===g.id?{...x,sel:!x.sel}:x)})),
+      bg:g.sel?'color-mix(in srgb,var(--p-accent-2) 12%, transparent)':'transparent',
+      border:g.sel?'var(--p-accent-2)':'var(--p-border)',
+      check:g.sel?'✓':'', checkBg:g.sel?'var(--p-accent-2)':'transparent', checkBorder:g.sel?'var(--p-accent-2)':'var(--p-border)',
+    }));
+    const invited=s.guests.filter(g=>g.sel).length;
+
+    const links=s.links.map((l,i)=>({
+      label:l.label, url:l.url,
+      onLabel:(e)=>{const v=e.target.value;this.setState(st=>({links:st.links.map((x,j)=>j===i?{...x,label:v}:x)}));},
+      onUrl:(e)=>{const v=e.target.value;this.setState(st=>({links:st.links.map((x,j)=>j===i?{...x,url:v}:x)}));},
+      remove:()=>this.setState(st=>({links:st.links.filter((x,j)=>j!==i)})),
+    }));
+    const linkChips=s.links.filter(l=>l.label.trim()).map(l=>({label:l.label}));
+
+    const seg=(on)=>({bg:on?'color-mix(in srgb,var(--p-accent) 18%, transparent)':'transparent',border:on?'var(--p-accent)':'var(--p-border)'});
+    const all=seg(s.audience==='all'),kids=seg(s.audience==='kids'),adults=seg(s.audience==='adults');
+    const chk=(on)=>({chk:on?'✓':'',bg:on?'color-mix(in srgb,var(--p-accent-2) 12%, transparent)':'transparent',border:on?'var(--p-accent-2)':'var(--p-border)',cbg:on?'var(--p-accent-2)':'transparent',cbd:on?'var(--p-accent-2)':'var(--p-border)'});
+    const dt=chk(s.pollDiet),dp=chk(s.pollDate),pt=chk(s.potluck);
+
+    const ptypes=[{id:'itinerary',name:'Itinerary',icon:'◷'},{id:'menu',name:'Menu',icon:'🍽'},{id:'tracklist',name:'Track list',icon:'♫'},{id:'games',name:'Games',icon:'◆'},{id:'custom',name:'Custom',icon:'✎'}];
+    const pageTypes=ptypes.map(t=>({name:t.name,icon:t.icon,add:()=>this.setState(st=>(st.infoPages.find(p=>p.id===t.id)?{}:{infoPages:[...st.infoPages,{id:t.id,name:t.name,icon:t.icon}]}))}));
+    const infoPages=s.infoPages.map(p=>({name:p.name,icon:p.icon,remove:()=>this.setState(st=>({infoPages:st.infoPages.filter(x=>x.id!==p.id)}))}));
+
+    const audMap={all:'All ages',kids:'Kid-friendly',adults:'Adults only · 21+'};
+    const polls=[]; if(s.pollDiet)polls.push('dietary needs'); if(s.pollDate)polls.push('best date'); if(s.potluck)polls.push('what they’ll bring');
+
+    const when=[s.date,s.time].filter(Boolean).join(' · ');
+
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      title:s.title, date:s.date, time:s.time, place:s.place, parking:s.parking,
+      onTitle:(e)=>this.setState({title:e.target.value}),
+      onDate:(e)=>this.setState({date:e.target.value}),
+      onTime:(e)=>this.setState({time:e.target.value}),
+      onPlace:(e)=>this.setState({place:e.target.value}),
+      onParking:(e)=>this.setState({parking:e.target.value}),
+      categories,
+      guests, invitedCount:invited,
+      selectAll:()=>this.setState(st=>({guests:st.guests.map(x=>({...x,sel:true}))})),
+      plusAllowed:s.plusAllowed, plusMax:s.plusMax,
+      togglePlus:()=>this.setState(p=>({plusAllowed:!p.plusAllowed})),
+      plusTrackBg:s.plusAllowed?'var(--p-accent-2)':'var(--p-border)',
+      plusKnobX:s.plusAllowed?'25px':'3px',
+      incMax:()=>this.setState(p=>({plusMax:Math.min(5,p.plusMax+1)})),
+      decMax:()=>this.setState(p=>({plusMax:Math.max(1,p.plusMax-1)})),
+      audAll:()=>this.setState({audience:'all'}), audKids:()=>this.setState({audience:'kids'}), audAdults:()=>this.setState({audience:'adults'}),
+      allBg:all.bg,allBorder:all.border,kidsBg:kids.bg,kidsBorder:kids.border,adultsBg:adults.bg,adultsBorder:adults.border,
+      togglePollDiet:()=>this.setState(p=>({pollDiet:!p.pollDiet})),
+      togglePollDate:()=>this.setState(p=>({pollDate:!p.pollDate})),
+      dietChk:dt.chk,dietBg:dt.bg,dietBorder:dt.border,dietChkBg:dt.cbg,dietChkBorder:dt.cbd,
+      dateChk:dp.chk,dateBg:dp.bg,dateBorder:dp.border,dateChkBg:dp.cbg,dateChkBorder:dp.cbd,
+      togglePotluck:()=>this.setState(p=>({potluck:!p.potluck})),
+      potChk:pt.chk,potBg:pt.bg,potBorder:pt.border,potChkBg:pt.cbg,potChkBorder:pt.cbd,
+      pageTypes, infoPages, hasPages:s.infoPages.length>0,
+      links, addLink:()=>this.setState(st=>({links:[...st.links,{label:'',url:''}]})),
+      // preview
+      catLabel:cat.name, catDot:cat.dot,
+      catTagBg:'color-mix(in srgb,'+cat.dot+' 22%, transparent)', catTagFg:'var(--p-text)',
+      whenLine: when || 'Date & time',
+      titleShown: s.title.trim() || 'Untitled gathering',
+      placeShown: s.place.trim() || 'Location TBD',
+      audienceBadge: audMap[s.audience],
+      plusBadge: s.plusAllowed ? ('+'+s.plusMax+' allowed') : 'No plus-ones',
+      invitedBadge: invited+' invited',
+      hasPolls: polls.length>0, pollsLine: polls.join(' · '),
+      hasLinks: linkChips.length>0, linkChips,
+      hasParking: s.parking.trim().length>0, parkingShown:s.parking,
+      shortLink: 'marlys.yard/e/' + (s.title.trim()? s.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,16) : 'new'),
+      copyLabel: s.copied ? 'Copied ✓' : 'Copy',
+      copyShare:()=>{ this.setState({copied:true}); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({copied:false}),1600); },
+    };
+  }
+}
+</script>
+</body>
+</html>

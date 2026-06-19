@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#481427;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 12px 30px rgba(12,1,3,.5); --p-field:#2C0710;
+  }
+  [data-theme="light"]{
+    --p-bg:#F5EFE7; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 12px 28px rgba(38,3,6,.10); --p-field:#FFFFFF;
+  }
+  @keyframes rec-blink{0%,100%{opacity:1}50%{opacity:.25}}
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased">
+
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:color-mix(in srgb,var(--p-bg) 84%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--p-border)">
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="Send Invites.dc.html" style="display:flex;align-items:center;gap:7px;color:var(--p-text-2);text-decoration:none;font-size:13px"><span style="font-size:16px">‹</span> Send invites</a>
+      <span style="color:var(--p-border)">/</span><span style="font-size:13px;font-weight:600">Video invite</span>
+    </div>
+    <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);border-radius:999px;padding:7px 13px;font-family:'Hanken Grotesk';font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }}</button>
+  </div>
+
+  <div style="max-width:1080px;margin:0 auto;padding:32px 28px 80px;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:40px;align-items:start">
+
+    <!-- RECORDER -->
+    <div style="display:flex;flex-direction:column;gap:22px;min-width:0">
+      <div><div style="font-size:12px;letter-spacing:.2em;color:var(--p-muted);font-weight:600;margin-bottom:8px">RECORD A WELCOME</div><h1 style="font-family:'Archivo';font-weight:800;font-size:32px;letter-spacing:-.02em;margin:0">Say it yourself.</h1><p style="font-size:15px;color:var(--p-text-2);margin:10px 0 0;line-height:1.55;max-width:440px">A 30-second video lands harder than a text. Look into the lens and tell them why they should come.</p></div>
+
+      <!-- viewport -->
+      <div style="position:relative;border-radius:18px;overflow:hidden;background:#140103;border:1px solid var(--p-border);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;box-shadow:var(--p-shadow)">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%, #3a1418, #140103 75%)"></div>
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(125deg,rgba(255,255,255,.015),rgba(255,255,255,.015) 12px,transparent 12px,transparent 24px)"></div>
+
+        <sc-if value="{{ isRecorded }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ togglePlay }}" style="cursor:pointer;position:relative;z-index:2;width:72px;height:72px;border-radius:50%;border:none;background:rgba(242,228,214,.92);display:flex;align-items:center;justify-content:center;color:#260306;font-size:26px">{{ playGlyph }}</button>
+        </sc-if>
+        <sc-if value="{{ notRecorded }}" hint-placeholder-val="{{ true }}">
+          <div style="position:relative;z-index:2;text-align:center;color:var(--p-text-2)"><div style="font-size:34px;margin-bottom:8px">◉</div><div style="font-size:13px;letter-spacing:.04em">{{ viewportLabel }}</div></div>
+        </sc-if>
+
+        <sc-if value="{{ isRecording }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:16px;left:16px;z-index:3;display:flex;align-items:center;gap:8px;background:rgba(20,1,3,.6);padding:7px 13px;border-radius:999px"><span style="width:10px;height:10px;border-radius:50%;background:#E0705F;animation:rec-blink 1s steps(1) infinite"></span><span style="font-size:12.5px;font-weight:700;color:#F2E4D6;font-variant-numeric:tabular-nums">REC {{ timer }}</span></div>
+        </sc-if>
+        <sc-if value="{{ isRecorded }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;bottom:16px;left:16px;right:16px;z-index:3;display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#E8D3BF;font-variant-numeric:tabular-nums">{{ playhead }} / {{ timer }}</span><div style="flex:1;height:4px;border-radius:999px;background:rgba(242,228,214,.25);overflow:hidden"><span style="display:block;height:100%;width:{{ playPct }};background:var(--p-accent)"></span></div></div>
+        </sc-if>
+      </div>
+
+      <!-- controls -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px">
+        <sc-if value="{{ isIdle }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ startRec }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-size:16px;font-weight:700;padding:15px 32px;border-radius:999px;box-shadow:var(--p-shadow)"><span style="width:14px;height:14px;border-radius:50%;background:#fff"></span>Record</button>
+        </sc-if>
+        <sc-if value="{{ isRecording }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ stopRec }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;background:#E0705F;color:#260306;border:none;font-family:'Hanken Grotesk';font-size:16px;font-weight:700;padding:15px 32px;border-radius:999px;box-shadow:var(--p-shadow)"><span style="width:13px;height:13px;border-radius:3px;background:#260306"></span>Stop · {{ timer }}</button>
+        </sc-if>
+        <sc-if value="{{ isRecorded }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ retake }}" style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;font-weight:600;padding:14px 24px;border-radius:999px">Retake</button>
+          <button onClick="{{ useVideo }}" style="cursor:pointer;background:var(--p-accent-2);color:#260306;border:none;font-family:'Hanken Grotesk';font-size:15px;font-weight:700;padding:14px 28px;border-radius:999px;box-shadow:var(--p-shadow)">Use this video ✓</button>
+        </sc-if>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <span style="font-size:12px;color:var(--p-muted);padding:7px 13px;border:1px solid var(--p-border);border-radius:999px">Tip: keep it under 30s</span>
+        <span style="font-size:12px;color:var(--p-muted);padding:7px 13px;border:1px solid var(--p-border);border-radius:999px">Good light, face the window</span>
+        <span style="font-size:12px;color:var(--p-muted);padding:7px 13px;border:1px solid var(--p-border);border-radius:999px">Or upload a clip</span>
+      </div>
+    </div>
+
+    <!-- INVITE PREVIEW -->
+    <div style="position:sticky;top:84px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:11px;letter-spacing:.22em;color:var(--p-muted);font-weight:700">HOW IT LANDS</div>
+      <div style="border:1px solid var(--p-border);border-radius:18px;overflow:hidden;background:var(--p-surface);box-shadow:var(--p-shadow)">
+        <div style="position:relative;aspect-ratio:4/5;background:radial-gradient(ellipse at 50% 30%, #3a1418, #140103 78%);display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;background:repeating-linear-gradient(125deg,rgba(255,255,255,.015),rgba(255,255,255,.015) 12px,transparent 12px,transparent 24px)"></div>
+          <sc-if value="{{ hasVideo }}" hint-placeholder-val="{{ false }}">
+            <div style="position:relative;z-index:2;width:64px;height:64px;border-radius:50%;background:rgba(242,228,214,.92);display:flex;align-items:center;justify-content:center;color:#260306;font-size:24px">▶</div>
+            <div style="position:absolute;top:14px;left:14px;z-index:2;display:flex;align-items:center;gap:7px;background:rgba(20,1,3,.55);padding:6px 11px;border-radius:999px"><span style="font-size:11px;font-weight:700;color:#F2E4D6;letter-spacing:.06em">▸ FROM TAM</span></div>
+            <div style="position:absolute;bottom:0;left:0;right:0;z-index:2;padding:18px 18px 16px;background:linear-gradient(to top,rgba(20,1,3,.92),transparent)">
+              <div style="font-size:10px;letter-spacing:.18em;color:var(--p-candle);font-weight:700;font-variant-numeric:tabular-nums">SAT · JUN 28 · 8 PM</div>
+              <div style="font-family:'Archivo';font-weight:800;font-size:22px;color:#FBEFE6;letter-spacing:-.01em;margin-top:3px">Supper on the Patio</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noVideo }}" hint-placeholder-val="{{ true }}">
+            <div style="position:relative;z-index:2;text-align:center;color:var(--p-muted);padding:24px"><div style="font-size:30px;margin-bottom:10px">◉</div><div style="font-size:13px;line-height:1.5">Record a video to see<br>how the invite looks</div></div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ hasVideo }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 18px">
+            <input value="{{ caption }}" onInput="{{ onCaption }}" placeholder="Add a caption…" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:14px;padding:11px 13px;border-radius:8px;outline:none;margin-bottom:12px" style-focus="border-color:var(--p-accent)"/>
+            <button onClick="{{ send }}" style="cursor:pointer;width:100%;background:{{ sendBg }};color:#fff;border:none;font-family:'Hanken Grotesk';font-size:15px;font-weight:700;padding:14px;border-radius:10px;box-shadow:var(--p-shadow)">{{ sendLabel }}</button>
+          </div>
+        </sc-if>
+      </div>
+      <div style="font-size:11.5px;color:var(--p-muted);text-align:center;line-height:1.5">Plays inline in email & text · falls back to a thumbnail + link</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1080,&quot;height&quot;:840},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { theme:'dark', status:'idle', sec:0, playing:false, playSec:0, caption:'Come hungry — I mean it.', sent:false };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+  componentWillUnmount(){ clearInterval(this._iv); clearInterval(this._pv); }
+  fmt(s){ const m=Math.floor(s/60); const r=s%60; return m+':'+String(r).padStart(2,'0'); }
+  startRec(){ this.setState({status:'recording',sec:0}); clearInterval(this._iv); this._iv=setInterval(()=>{ this.setState(st=>{ if(st.sec>=30){ clearInterval(this._iv); return {status:'recorded',sec:30}; } return {sec:st.sec+1}; }); },1000); }
+  stopRec(){ clearInterval(this._iv); this.setState({status:'recorded'}); }
+  retake(){ clearInterval(this._pv); this.setState({status:'idle',sec:0,playing:false,playSec:0,sent:false}); }
+  togglePlay(){ const p=!this.state.playing; this.setState({playing:p}); clearInterval(this._pv); if(p){ this._pv=setInterval(()=>{ this.setState(st=>{ if(st.playSec>=st.sec){ clearInterval(this._pv); return {playing:false,playSec:0}; } return {playSec:st.playSec+1}; }); },1000); } }
+  renderVals(){
+    const s=this.state;
+    const dur=s.sec||0;
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      isIdle:s.status==='idle', isRecording:s.status==='recording', isRecorded:s.status==='recorded',
+      notRecorded:s.status!=='recorded',
+      viewportLabel: s.status==='recording' ? 'Recording…' : 'Camera preview',
+      timer:this.fmt(dur), playhead:this.fmt(s.playSec), playPct: dur? Math.round(s.playSec/dur*100)+'%':'0%',
+      playGlyph: s.playing ? '❚❚' : '▶',
+      startRec:()=>this.startRec(), stopRec:()=>this.stopRec(), retake:()=>this.retake(), togglePlay:()=>this.togglePlay(),
+      useVideo:()=>{}, 
+      hasVideo:s.status==='recorded', noVideo:s.status!=='recorded',
+      caption:s.caption, onCaption:(e)=>this.setState({caption:e.target.value}),
+      send:()=>this.setState({sent:true}),
+      sendBg: s.sent?'var(--p-accent-2)':'var(--p-accent)',
+      sendLabel: s.sent?'Video invite sent ✓':'Send video invite',
+    };
+  }
+}
+</script>
+</body>
+</html>

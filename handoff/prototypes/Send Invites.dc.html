@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#481427;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 12px 30px rgba(12,1,3,.5); --p-field:#2C0710;
+  }
+  [data-theme="light"]{
+    --p-bg:#F5EFE7; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 12px 28px rgba(38,3,6,.10); --p-field:#FFFFFF;
+  }
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased">
+
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;background:color-mix(in srgb,var(--p-bg) 84%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--p-border)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <a href="Host Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;color:var(--p-text-2);text-decoration:none;font-size:13px"><span style="font-size:16px">‹</span> Dashboard</a>
+      <span style="color:var(--p-border)">/</span><span style="font-size:13px;font-weight:600">Send invites · Supper on the Patio</span>
+    </div>
+    <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);border-radius:999px;padding:7px 13px;font-family:'Hanken Grotesk';font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }}</button>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:32px 28px 80px;display:grid;grid-template-columns:1fr 420px;gap:36px;align-items:start">
+
+    <!-- CONTROLS -->
+    <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+      <div><div style="font-size:12px;letter-spacing:.2em;color:var(--p-muted);font-weight:600;margin-bottom:8px">SEND INVITES</div><h1 style="font-family:'Archivo';font-weight:800;font-size:32px;letter-spacing:-.02em;margin:0">Get the word out.</h1></div>
+
+      <!-- channel -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:22px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:16px">Channel</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <button onClick="{{ chEmail }}" style="cursor:pointer;text-align:left;padding:16px;border-radius:12px;border:1.5px solid {{ emailBorder }};background:{{ emailBg }};font-family:'Hanken Grotesk'"><div style="font-weight:700;font-size:15px;color:var(--p-text);margin-bottom:3px">✉ Email</div><div style="font-size:12.5px;color:var(--p-muted)">Rich invitation card</div></button>
+          <button onClick="{{ chSms }}" style="cursor:pointer;text-align:left;padding:16px;border-radius:12px;border:1.5px solid {{ smsBorder }};background:{{ smsBg }};font-family:'Hanken Grotesk'"><div style="font-weight:700;font-size:15px;color:var(--p-text);margin-bottom:3px">✆ Text (SMS)</div><div style="font-size:12.5px;color:var(--p-muted)">Short link + RSVP</div></button>
+        </div>
+      </section>
+
+      <!-- template / design picker -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:22px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:6px">Invitation design</div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Pick the look — all on-brand, all from the system.</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <sc-for list="{{ templates }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.pick }}" style="cursor:pointer;padding:0;border-radius:12px;border:2px solid {{ t.border }};background:transparent;overflow:hidden;font-family:'Hanken Grotesk'">
+              <div style="height:74px;background:{{ t.swatch }};display:flex;align-items:center;justify-content:center"><span style="font-family:'Archivo';font-weight:800;font-size:15px;color:{{ t.swatchInk }};letter-spacing:{{ t.swatchTrack }}">{{ t.glyph }}</span></div>
+              <div style="padding:8px 6px;font-size:12px;font-weight:600;color:var(--p-text);background:var(--p-surface-2)">{{ t.name }}</div>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- recipients -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-family:'Archivo';font-weight:700;font-size:16px">Recipients</div><span style="font-size:13px;font-weight:700;color:var(--p-accent-2);font-variant-numeric:tabular-nums">{{ recipientCount }} people</span></div>
+        <p style="font-size:13px;color:var(--p-muted);margin:0 0 16px">Pick lists from your guest book, or add individuals.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ lists }}" as="L" hint-placeholder-count="4">
+            <button onClick="{{ L.toggle }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:10px;border:1px solid {{ L.border }};background:{{ L.bg }};font-family:'Hanken Grotesk'">
+              <span style="width:11px;height:11px;border-radius:3px;background:{{ L.color }};flex:none"></span>
+              <span style="flex:1;font-size:14.5px;font-weight:600;color:var(--p-text)">{{ L.name }}</span>
+              <span style="font-size:12.5px;color:var(--p-muted);font-variant-numeric:tabular-nums">{{ L.count }}</span>
+              <span style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid {{ L.chkBorder }};background:{{ L.chkBg }};display:flex;align-items:center;justify-content:center;color:#260306;font-size:13px;font-weight:800">{{ L.chk }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+
+      <!-- message -->
+      <section style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:22px">
+        <div style="font-family:'Archivo';font-weight:700;font-size:16px;margin-bottom:14px">Your note</div>
+        <textarea value="{{ note }}" onInput="{{ onNote }}" rows="3" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:15px;line-height:1.55;padding:14px 16px;border-radius:10px;outline:none;resize:none" style-focus="border-color:var(--p-accent)"></textarea>
+        <div style="font-size:12px;color:var(--p-muted);margin-top:8px">{{ noteMeta }}</div>
+      </section>
+    </div>
+
+    <!-- PREVIEW -->
+    <div style="position:sticky;top:84px;display:flex;flex-direction:column;gap:16px">
+      <div style="font-size:11px;letter-spacing:.22em;color:var(--p-muted);font-weight:700">{{ previewLabel }}</div>
+
+      <!-- EMAIL PREVIEW -->
+      <sc-if value="{{ isEmail }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid var(--p-border);border-radius:14px;overflow:hidden;background:var(--p-surface);box-shadow:var(--p-shadow)">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--p-border);font-size:12px;color:var(--p-muted)"><span style="color:var(--p-text-2);font-weight:600">From</span> Marly’s Yard · <span style="color:var(--p-text-2);font-weight:600">Subj</span> You’re invited to the yard</div>
+          <div style="padding:24px;background:{{ cardBg }}">
+            <div style="text-align:center">
+              <dc-import name="Crest" size="64" showWord="{{ false }}" ring="{{ cardCrest }}" vine="{{ cardVine }}" leaf="{{ cardLeaf }}" double="{{ false }}" hint-size="64px,64px"></dc-import>
+              <div style="font-size:10.5px;letter-spacing:.3em;color:{{ cardMuted }};font-weight:600;margin:12px 0 14px">{{ cardEyebrow }}</div>
+              <div style="font-family:'Archivo';font-weight:{{ cardWeight }};font-size:26px;line-height:1.05;letter-spacing:{{ cardTrack }};color:{{ cardInk }};margin-bottom:10px">Supper on the Patio</div>
+              <div style="font-size:13px;color:{{ cardSub }};font-variant-numeric:tabular-nums;margin-bottom:18px">Sat · Jun 28 · 8 PM · The Yard</div>
+              <div style="font-size:13.5px;color:{{ cardSub }};line-height:1.6;max-width:280px;margin:0 auto 20px">{{ note }}</div>
+              <span style="display:inline-block;background:{{ cardCta }};color:#fff;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px">RSVP</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SMS PREVIEW -->
+      <sc-if value="{{ isSms }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid var(--p-border);border-radius:24px;padding:18px;background:var(--p-surface);box-shadow:var(--p-shadow)">
+          <div style="text-align:center;font-size:11px;color:var(--p-muted);margin-bottom:14px">Text message · Today 6:14 PM</div>
+          <div style="background:var(--p-surface-2);border-radius:18px 18px 18px 5px;padding:14px 16px;max-width:88%;font-size:14.5px;line-height:1.5;color:var(--p-text)">{{ smsBody }}</div>
+          <div style="font-size:11px;color:var(--p-muted);margin-top:10px;text-align:right">{{ smsMeta }}</div>
+        </div>
+      </sc-if>
+
+      <!-- QR -->
+      <div style="border:1px solid var(--p-border);border-radius:14px;padding:18px;background:var(--p-surface);display:flex;align-items:center;gap:16px">
+        <div style="flex:none;background:#FAFBF5;border-radius:10px;padding:9px;line-height:0"><canvas ref="{{ qrRef }}" width="116" height="116" style="display:block;width:96px;height:96px"></canvas></div>
+        <div><div style="font-family:'Archivo';font-weight:700;font-size:15px;margin-bottom:4px">Event QR</div><div style="font-size:12.5px;color:var(--p-muted);line-height:1.5;margin-bottom:8px">Print it, post it, drop it in a story.</div><button style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:8px">Download PNG</button></div>
+      </div>
+
+      <!-- send -->
+      <button onClick="{{ send }}" style="cursor:pointer;background:{{ sendBg }};color:#fff;border:none;font-family:'Hanken Grotesk';font-size:16px;font-weight:700;padding:16px;border-radius:10px;box-shadow:var(--p-shadow)">{{ sendLabel }}</button>
+      <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:10px;text-align:center">
+          <div style="flex:1;background:var(--p-surface);border:1px solid var(--p-border);border-radius:10px;padding:12px"><div style="font-family:'Archivo';font-weight:800;font-size:20px;color:var(--p-accent-2);font-variant-numeric:tabular-nums">{{ recipientCount }}</div><div style="font-size:11px;color:var(--p-muted)">Delivered</div></div>
+          <div style="flex:1;background:var(--p-surface);border:1px solid var(--p-border);border-radius:10px;padding:12px"><div style="font-family:'Archivo';font-weight:800;font-size:20px;font-variant-numeric:tabular-nums">{{ openRate }}</div><div style="font-size:11px;color:var(--p-muted)">Est. open rate</div></div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { theme:'dark', channel:'email', template:'candlelit',
+    note:'Pull up a chair — slow dinner under the vines. Doors at eight, we eat at nine.',
+    lists:[
+      {id:'inner',name:'Inner Circle',color:'#D96B43',count:3,sel:true},
+      {id:'supper',name:'Supper regulars',color:'#A62F24',count:5,sel:true},
+      {id:'listening',name:'Listening crew',color:'#5DCAA5',count:3,sel:false},
+      {id:'family',name:'Family',color:'#A67244',count:1,sel:false},
+    ], sent:false };
+  qrRef = React.createRef();
+  componentDidMount(){
+    if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme});
+    this.drawQR();
+  }
+  drawQR(){
+    const cv=this.qrRef.current; if(!cv) return;
+    const ctx=cv.getContext('2d'); const N=25, S=cv.width/N;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#260306';
+    let seed=20260628;
+    const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+    const inFinder=(r,c)=>((r<8&&c<8)||(r<8&&c>=N-8)||(r>=N-8&&c<8));
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){ if(inFinder(r,c))continue; if(rnd()>0.52) ctx.fillRect(c*S,r*S,S,S); }
+    const finder=(or,oc)=>{ ctx.fillStyle='#260306'; ctx.fillRect(or*S,oc*S,7*S,7*S); ctx.clearRect((or+1)*S,(oc+1)*S,5*S,5*S); ctx.fillStyle='#260306'; ctx.fillRect((or+2)*S,(oc+2)*S,3*S,3*S); };
+    finder(0,0); finder(N-7,0); finder(0,N-7);
+  }
+  renderVals(){
+    const s=this.state;
+    const ch=(c)=>({bg:s.channel===c?'color-mix(in srgb,var(--p-accent) 16%, transparent)':'transparent',border:s.channel===c?'var(--p-accent)':'var(--p-border)'});
+    const e=ch('email'),m=ch('sms');
+    const tpls=[
+      {id:'candlelit',name:'Candlelit',glyph:'Aa',swatch:'linear-gradient(150deg,#590242,#2B0A18)',swatchInk:'#F2E4D6',swatchTrack:'-.01em',
+        cardBg:'linear-gradient(160deg,#3A0A12,#260306)',crest:'#E0A867',vine:'#5DCAA5',leaf:'#E0A867',muted:'#C98A4E',ink:'#F2E4D6',sub:'#D8C7B6',cta:'#D96B43',eyebrow:'YOU’RE INVITED',weight:800,track:'-.01em'},
+      {id:'mural',name:'Mural',glyph:'Aa',swatch:'linear-gradient(135deg,#D96B43,#A62F24 60%,#315955)',swatchInk:'#FBEFE6',swatchTrack:'-.02em',
+        cardBg:'#590242',crest:'#5DCAA5',vine:'#E0A867',leaf:'#5DCAA5',muted:'#F0A878',ink:'#FBEFE6',sub:'#F3D9C8',cta:'#D96B43',eyebrow:'WHERE THE NIGHT GETS LOUD',weight:900,track:'-.02em'},
+      {id:'garden',name:'Garden',glyph:'Aa',swatch:'linear-gradient(150deg,#315955,#5DCAA5)',swatchInk:'#08231C',swatchTrack:'.04em',
+        cardBg:'linear-gradient(160deg,#2E0810,#3A0A12)',crest:'#5DCAA5',vine:'#5DCAA5',leaf:'#E0A867',muted:'#7FD3B4',ink:'#EAF6F0',sub:'#C9E6DA',cta:'#5DCAA5',eyebrow:'PULL UP A CHAIR',weight:300,track:'.12em'},
+    ];
+    const templates=tpls.map(t=>({id:t.id,name:t.name,glyph:t.glyph,swatch:t.swatch,swatchInk:t.swatchInk,swatchTrack:t.swatchTrack,
+      border:s.template===t.id?'var(--p-accent)':'var(--p-border)', pick:()=>this.setState({template:t.id})}));
+    const tpl=tpls.find(t=>t.id===s.template);
+
+    const lists=s.lists.map(L=>({name:L.name,color:L.color,count:L.count+'',
+      toggle:()=>this.setState(st=>({lists:st.lists.map(x=>x.id===L.id?{...x,sel:!x.sel}:x)})),
+      bg:L.sel?'color-mix(in srgb,var(--p-accent-2) 12%, transparent)':'transparent',
+      border:L.sel?'var(--p-accent-2)':'var(--p-border)',
+      chk:L.sel?'✓':'',chkBg:L.sel?'var(--p-accent-2)':'transparent',chkBorder:L.sel?'var(--p-accent-2)':'var(--p-border)'}));
+    const count=s.lists.filter(L=>L.sel).reduce((a,L)=>a+L.count,0);
+
+    const smsBody='You’re invited to Supper on the Patio 🌿 Sat Jun 28, 8 PM at The Yard. '+s.note.split('.')[0]+'. RSVP: marlys.yard/e/supper';
+
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      qrRef:this.qrRef,
+      channel:s.channel, isEmail:s.channel==='email', isSms:s.channel==='sms',
+      chEmail:()=>this.setState({channel:'email'}), chSms:()=>this.setState({channel:'sms'}),
+      emailBg:e.bg,emailBorder:e.border, smsBg:m.bg,smsBorder:m.border,
+      templates,
+      cardBg:tpl.cardBg, cardCrest:tpl.crest, cardVine:tpl.vine, cardLeaf:tpl.leaf, cardMuted:tpl.muted,
+      cardInk:tpl.ink, cardSub:tpl.sub, cardCta:tpl.cta, cardEyebrow:tpl.eyebrow, cardWeight:tpl.weight, cardTrack:tpl.track,
+      lists, recipientCount:count,
+      note:s.note, onNote:(ev)=>this.setState({note:ev.target.value}),
+      noteMeta: s.note.length+' characters',
+      previewLabel: s.channel==='email' ? 'EMAIL PREVIEW' : 'TEXT PREVIEW',
+      smsBody, smsMeta: smsBody.length+' chars · 1 SMS segment',
+      send:()=>this.setState({sent:true}),
+      sendBg: s.sent ? 'var(--p-accent-2)' : 'var(--p-accent)',
+      sendLabel: s.sent ? ('Sent to '+count+' guests ✓') : ('Send to '+count+' guests'),
+      sent:s.sent, openRate:'68%',
+    };
+  }
+}
+</script>
+</body>
+</html>

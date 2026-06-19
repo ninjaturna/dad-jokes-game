@@ -1,10 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Marly's Yard — semantic theme tokens.
- * Placed BELOW the @tailwind directives so base body styles win over preflight.
+ * Paste into src/index.css (above the @tailwind directives, or in a layer).
  * Dark is the DEFAULT. Toggle by setting data-theme="light" on <html>.
+ *
+ * Load fonts in index.html <head>:
+ * <link rel="preconnect" href="https://fonts.googleapis.com">
+ * <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ * <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
  */
 
 :root,

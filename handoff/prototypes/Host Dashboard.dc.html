@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#481427; --p-rail:#2E0810;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 10px 26px rgba(12,1,3,.45); --p-field:#2C0710;
+    --p-going:#5DCAA5; --p-maybe:#E0A867; --p-no:#C98A4E;
+  }
+  [data-theme="light"]{
+    --p-bg:#F5EFE7; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0; --p-rail:#FBF7F1;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 10px 24px rgba(38,3,6,.08); --p-field:#FFFFFF;
+    --p-going:#2E8C6A; --p-maybe:#C08A3A; --p-no:#8A6A4A;
+  }
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;display:flex;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased">
+
+  <!-- RAIL -->
+  <aside style="width:248px;flex:none;background:var(--p-rail);border-right:1px solid var(--p-border);padding:22px 18px;display:flex;flex-direction:column;gap:8px;position:sticky;top:0;height:100vh">
+    <div style="display:flex;align-items:center;gap:11px;padding:6px 8px 18px">
+      <dc-import name="Crest" size="38" showWord="{{ false }}" double="{{ false }}" ringWidth="{{ 1.25 }}" hint-size="38px,38px"></dc-import>
+      <div style="line-height:1.1"><div style="font-family:'Archivo';font-weight:700;font-size:13px;letter-spacing:.16em;white-space:nowrap">MARLY’S YARD</div><div style="font-size:11px;color:var(--p-muted);margin-top:2px">Host</div></div>
+    </div>
+    <a href="#" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;text-decoration:none;color:var(--p-text);background:var(--p-surface-2);font-size:14px;font-weight:600"><span style="width:7px;height:7px;border-radius:2px;background:var(--p-accent)"></span>Gatherings</a>
+    <a href="#" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;text-decoration:none;color:var(--p-text-2);font-size:14px" style-hover="color:var(--p-text)"><span style="width:7px;height:7px;border-radius:2px;background:var(--p-border)"></span>Guests</a>
+    <a href="#" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;text-decoration:none;color:var(--p-text-2);font-size:14px" style-hover="color:var(--p-text)"><span style="width:7px;height:7px;border-radius:2px;background:var(--p-border)"></span>Messages</a>
+    <a href="#" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:9px;text-decoration:none;color:var(--p-text-2);font-size:14px" style-hover="color:var(--p-text)"><span style="width:7px;height:7px;border-radius:2px;background:var(--p-border)"></span>The list</a>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:8px;background:transparent;color:var(--p-text-2);border:1px solid var(--p-border);border-radius:9px;padding:10px 13px;font-family:'Hanken Grotesk';font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }} mode</button>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 6px"><span style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#D96B43,#A62F24);display:flex;align-items:center;justify-content:center;font-family:'Archivo';font-weight:700;color:#fff;font-size:13px">T</span><div style="line-height:1.2"><div style="font-size:13px;font-weight:600">Tam</div><div style="font-size:11px;color:var(--p-muted)">Black Cafe</div></div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="flex:1;min-width:0;padding:32px 40px 64px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px">
+      <div>
+        <div style="font-size:12px;letter-spacing:.2em;color:var(--p-muted);font-weight:600;margin-bottom:8px">GOOD EVENING, TAM</div>
+        <h1 style="font-family:'Archivo';font-weight:700;font-size:32px;letter-spacing:-.01em;margin:0">Your gatherings</h1>
+      </div>
+      <a href="Create Event.dc.html" style="cursor:pointer;text-decoration:none;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-weight:700;font-size:14px;padding:13px 22px;border-radius:9px;box-shadow:var(--p-shadow);display:flex;align-items:center;gap:8px" style-hover="filter:brightness(1.08)"><span style="font-size:17px;line-height:1">+</span>New gathering</a>
+    </div>
+
+    <!-- stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px">
+      <div style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:12px;color:var(--p-muted);letter-spacing:.04em;margin-bottom:10px">Upcoming</div><div style="font-family:'Archivo';font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">3</div></div>
+      <div style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:12px;color:var(--p-muted);letter-spacing:.04em;margin-bottom:10px">Going this week</div><div style="font-family:'Archivo';font-weight:800;font-size:30px;font-variant-numeric:tabular-nums;color:var(--p-going)">9</div></div>
+      <div style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:12px;color:var(--p-muted);letter-spacing:.04em;margin-bottom:10px">Response rate</div><div style="font-family:'Archivo';font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">82<span style="font-size:18px;color:var(--p-muted)">%</span></div></div>
+      <div style="background:var(--p-surface);border:1px solid var(--p-border);border-radius:12px;padding:18px 20px"><div style="font-size:12px;color:var(--p-muted);letter-spacing:.04em;margin-bottom:10px">On the list</div><div style="font-family:'Archivo';font-weight:800;font-size:30px;font-variant-numeric:tabular-nums">214</div></div>
+    </div>
+
+    <!-- list header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="font-family:'Archivo';font-weight:600;font-size:15px;letter-spacing:.06em;margin:0;text-transform:uppercase;color:var(--p-text-2)">Upcoming</h2>
+      <div style="display:flex;gap:18px;font-size:12px;color:var(--p-muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:var(--p-going)"></span>Going</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:var(--p-maybe)"></span>Maybe</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:2px;background:var(--p-no)"></span>Declined</span></div>
+    </div>
+
+    <!-- event rows -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ events }}" as="ev" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:20px;background:var(--p-surface);border:1px solid var(--p-border);border-radius:12px;padding:18px 22px;box-shadow:var(--p-shadow)">
+          <div style="flex:none;width:62px;text-align:center;border-right:1px solid var(--p-border);padding-right:18px">
+            <div style="font-size:11px;letter-spacing:.1em;color:var(--p-accent);font-weight:700">{{ ev.mon }}</div>
+            <div style="font-family:'Archivo';font-weight:800;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums">{{ ev.day }}</div>
+            <div style="font-size:11px;color:var(--p-muted)">{{ ev.dow }}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap">
+              <span style="font-family:'Archivo';font-weight:700;font-size:18px;letter-spacing:-.01em">{{ ev.title }}</span>
+              <span style="font-size:11px;font-weight:600;letter-spacing:.04em;padding:3px 10px;border-radius:999px;background:{{ ev.tagBg }};color:{{ ev.tagFg }};white-space:nowrap">{{ ev.tag }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="flex:1;max-width:280px;height:7px;border-radius:999px;overflow:hidden;display:flex;background:var(--p-field)">
+                <span style="width:{{ ev.goingPct }};background:var(--p-going)"></span>
+                <span style="width:{{ ev.maybePct }};background:var(--p-maybe)"></span>
+                <span style="width:{{ ev.noPct }};background:var(--p-no)"></span>
+              </div>
+              <span style="font-size:12.5px;color:var(--p-text-2);font-variant-numeric:tabular-nums;white-space:nowrap">{{ ev.summary }}</span>
+            </div>
+          </div>
+          <div style="flex:none;display:flex;gap:8px">
+            <button style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:9px 15px;border-radius:8px;white-space:nowrap" style-hover="border-color:var(--p-muted)">Message</button>
+            <button style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text-2);font-family:'Hanken Grotesk';font-size:13px;font-weight:600;padding:9px 15px;border-radius:8px;white-space:nowrap" style-hover="color:var(--p-text)">Edit</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- past -->
+    <h2 style="font-family:'Archivo';font-weight:600;font-size:15px;letter-spacing:.06em;margin:34px 0 14px;text-transform:uppercase;color:var(--p-text-2)">Recently passed</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:18px;padding:14px 22px;border:1px solid var(--p-border);border-radius:12px;opacity:.72">
+        <div style="flex:none;width:62px;text-align:center;border-right:1px solid var(--p-border);padding-right:18px"><div style="font-size:11px;color:var(--p-muted);font-weight:700">JUN</div><div style="font-family:'Archivo';font-weight:800;font-size:22px;font-variant-numeric:tabular-nums">14</div></div>
+        <div style="flex:1"><div style="font-family:'Archivo';font-weight:700;font-size:16px">Listening Party · Vol. 3</div><div style="font-size:12.5px;color:var(--p-muted);font-variant-numeric:tabular-nums">11 came · 14 said yes</div></div>
+        <a href="#" style="color:var(--p-accent-2);text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap">Recap →</a>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { theme: 'dark' };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+  renderVals(){
+    const s=this.state;
+    const mk=(mon,day,dow,title,tag,tagKind,g,m,n)=>{
+      const tot=g+m+n||1;
+      const tags={open:{bg:'color-mix(in srgb,var(--p-going) 20%, transparent)',fg:'var(--p-going)'},few:{bg:'color-mix(in srgb,var(--p-accent) 22%, transparent)',fg:'var(--p-accent)'},full:{bg:'var(--p-surface-2)',fg:'var(--p-muted)'}};
+      const t=tags[tagKind];
+      return {mon,day,dow,title,tag,tagBg:t.bg,tagFg:t.fg,
+        goingPct:(g/tot*100).toFixed(1)+'%',maybePct:(m/tot*100).toFixed(1)+'%',noPct:(n/tot*100).toFixed(1)+'%',
+        summary:g+' going · '+m+' maybe · '+n+' declined'};
+    };
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      events:[
+        mk('JUN','28','Sat','Supper on the Patio','3 seats left','few',9,3,2),
+        mk('JUL','10','Thu','Vinyl & Natural Wine','Open','open',6,5,1),
+        mk('JUL','20','Sun','Garden Brunch','Open','open',4,7,0),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

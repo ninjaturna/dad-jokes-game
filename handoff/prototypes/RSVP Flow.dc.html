@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:#260306}
+  :root,[data-theme="dark"]{
+    --p-bg:#260306; --p-surface:#3A0A12; --p-surface-2:#590242;
+    --p-text:#F2E4D6; --p-text-2:#D8C7B6; --p-muted:#C98A4E;
+    --p-accent:#D96B43; --p-accent-2:#5DCAA5; --p-border:#5A3326;
+    --p-candle:#E0A867; --p-shadow:0 18px 44px rgba(10,1,2,.6); --p-field:#2C0710; --p-scrim:rgba(38,3,6,.78);
+  }
+  [data-theme="light"]{
+    --p-bg:#FAFBF5; --p-surface:#FFFFFF; --p-surface-2:#F3E9E0;
+    --p-text:#260306; --p-text-2:#733122; --p-muted:#8A6A4A;
+    --p-accent:#A62F24; --p-accent-2:#315955; --p-border:#E4D7CB;
+    --p-candle:#A67244; --p-shadow:0 18px 40px rgba(38,3,6,.14); --p-field:#FFFFFF; --p-scrim:rgba(38,3,6,.5);
+  }
+  @keyframes my-glow{0%,100%{opacity:.45}50%{opacity:.75}}
+  @keyframes my-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  ::selection{background:var(--p-accent);color:#fff}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="background:var(--p-bg);color:var(--p-text);font-family:'Hanken Grotesk',sans-serif;min-height:100vh;position:relative;transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;padding:24px;overflow-x:hidden">
+
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.05;mix-blend-mode:overlay;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%222%22/></filter><rect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23n)%22/></svg>')"></div>
+  <div style="position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:480px;background:radial-gradient(ellipse at center, color-mix(in srgb,var(--p-candle) 32%, transparent), transparent 70%);filter:blur(24px);animation:my-glow 8s ease-in-out infinite;pointer-events:none;z-index:0"></div>
+
+  <!-- top -->
+  <div style="position:relative;z-index:2;width:100%;max-width:460px;display:flex;align-items:center;justify-content:space-between;padding:8px 2px 0">
+    <div style="display:flex;align-items:center;gap:9px"><dc-import name="Crest" size="34" showWord="{{ false }}" double="{{ false }}" ringWidth="{{ 1.25 }}" hint-size="34px,34px"></dc-import><span style="font-family:'Archivo';font-weight:700;font-size:12px;letter-spacing:.18em;white-space:nowrap">MARLY’S YARD</span></div>
+    <button onClick="{{ toggleTheme }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;background:transparent;color:var(--p-text);border:1px solid var(--p-border);border-radius:999px;padding:6px 13px;font-family:'Hanken Grotesk';font-size:11px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:var(--p-candle)"></span>{{ themeLabel }}</button>
+  </div>
+
+  <!-- card -->
+  <div style="position:relative;z-index:1;width:100%;max-width:460px;margin:auto 0;background:var(--p-surface);border:1px solid var(--p-border);border-radius:18px;box-shadow:var(--p-shadow);overflow:hidden">
+
+    <!-- event strip -->
+    <div style="position:relative;padding:20px 26px;border-bottom:1px solid var(--p-border);background:var(--p-surface-2)">
+      <div style="font-size:10.5px;letter-spacing:.2em;color:var(--p-candle);font-weight:700;margin-bottom:6px;font-variant-numeric:tabular-nums">SAT · JUN 28 · 8 PM · THE YARD</div>
+      <div style="font-family:'Archivo';font-weight:700;font-size:21px;letter-spacing:-.01em">Supper on the Patio</div>
+    </div>
+
+    <!-- progress -->
+    <div style="display:flex;gap:6px;padding:18px 26px 0">
+      <span style="flex:1;height:4px;border-radius:999px;background:{{ p1 }}"></span>
+      <span style="flex:1;height:4px;border-radius:999px;background:{{ p2 }}"></span>
+      <span style="flex:1;height:4px;border-radius:999px;background:{{ p3 }}"></span>
+    </div>
+
+    <div style="padding:26px">
+      <!-- STEP 1 -->
+      <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:11px;letter-spacing:.24em;color:var(--p-muted);font-weight:600;margin-bottom:10px">STEP 1 OF 3</div>
+          <h1 style="font-family:'Archivo';font-weight:800;font-size:30px;letter-spacing:-.01em;margin:0 0 6px">Will you be there?</h1>
+          <p style="font-size:14.5px;color:var(--p-text-2);margin:0 0 24px">No account needed. One tap.</p>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <button onClick="{{ chooseYes }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:12px;border:1.5px solid {{ yesBorder }};background:{{ yesBg }};color:{{ yesFg }};font-family:'Hanken Grotesk'" style-hover="border-color:#5DCAA5"><span style="width:12px;height:12px;border-radius:50%;background:#5DCAA5;flex:none"></span><span style="font-weight:700;font-size:18px;white-space:nowrap">Yes, I’m in</span></button>
+            <button onClick="{{ chooseMaybe }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:12px;border:1.5px solid {{ maybeBorder }};background:{{ maybeBg }};color:{{ maybeFg }};font-family:'Hanken Grotesk'" style-hover="border-color:#E0A867"><span style="width:12px;height:12px;border-radius:50%;background:#E0A867;flex:none"></span><span style="font-weight:700;font-size:18px;white-space:nowrap">Maybe</span></button>
+            <button onClick="{{ chooseNo }}" style="cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:12px;border:1.5px solid {{ noBorder }};background:{{ noBg }};color:{{ noFg }};font-family:'Hanken Grotesk'" style-hover="border-color:#E0705F"><span style="width:12px;height:12px;border-radius:50%;background:#E0705F;flex:none"></span><span style="font-weight:700;font-size:18px;white-space:nowrap">Can’t make it</span></button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 2 -->
+      <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="font-size:11px;letter-spacing:.24em;color:var(--p-muted);font-weight:600;margin-bottom:10px">STEP 2 OF 3</div>
+          <h1 style="font-family:'Archivo';font-weight:800;font-size:30px;letter-spacing:-.01em;margin:0 0 6px">{{ step2Title }}</h1>
+          <p style="font-size:14.5px;color:var(--p-text-2);margin:0 0 22px">Just a name so we know to set a place.</p>
+          <label style="display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--p-text-2);margin-bottom:8px">Your name</label>
+          <input value="{{ name }}" onInput="{{ onName }}" placeholder="e.g. Jordan" style="width:100%;background:var(--p-field);border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-size:16px;padding:15px 16px;border-radius:10px;outline:none;margin-bottom:20px" style-focus="border-color:var(--p-accent)"/>
+          <sc-if value="{{ showPlus }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border:1px solid var(--p-border);border-radius:12px;margin-bottom:20px">
+              <div><div style="font-weight:600;font-size:15px">Bringing anyone?</div><div style="font-size:13px;color:var(--p-muted)">Plus-ones welcome</div></div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <button onClick="{{ decPlus }}" style="cursor:pointer;width:40px;height:40px;border-radius:10px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:20px;line-height:1">–</button>
+                <span style="font-family:'Archivo';font-weight:700;font-size:20px;min-width:42px;text-align:center;font-variant-numeric:tabular-nums">+{{ plus }}</span>
+                <button onClick="{{ incPlus }}" style="cursor:pointer;width:40px;height:40px;border-radius:10px;border:1px solid var(--p-border);background:var(--p-field);color:var(--p-text);font-size:20px;line-height:1">+</button>
+              </div>
+            </div>
+          </sc-if>
+          <div style="display:flex;gap:12px">
+            <button onClick="{{ back }}" style="cursor:pointer;background:transparent;border:1px solid var(--p-border);color:var(--p-text);font-family:'Hanken Grotesk';font-weight:600;font-size:15px;padding:15px 20px;border-radius:10px">Back</button>
+            <button onClick="{{ finish }}" style="cursor:pointer;flex:1;background:var(--p-accent);color:#fff;border:none;font-family:'Hanken Grotesk';font-weight:700;font-size:16px;padding:15px;border-radius:10px;box-shadow:var(--p-shadow)" style-hover="filter:brightness(1.08)">{{ finishLabel }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- STEP 3 -->
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:8px 4px 6px">
+          <div style="display:flex;justify-content:center"><dc-import name="Crest" size="96" showWord="{{ false }}" ring="{{ doneRing }}" vine="{{ doneRing }}" leaf="#E0A867" double="{{ false }}" hint-size="96px,96px"></dc-import></div>
+          <h1 style="font-family:'Archivo';font-weight:800;font-size:32px;letter-spacing:-.01em;margin:16px 0 8px">{{ doneTitle }}</h1>
+          <p style="font-size:16px;line-height:1.55;color:var(--p-text-2);margin:0 auto 24px;max-width:300px">{{ doneBody }}</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <a href="#" style="text-decoration:none;background:var(--p-accent);color:#fff;font-weight:700;font-size:15px;padding:15px;border-radius:10px;box-shadow:var(--p-shadow)">Add to calendar</a>
+            <a href="Event Page.dc.html" style="text-decoration:none;background:transparent;border:1px solid var(--p-border);color:var(--p-text);font-weight:600;font-size:15px;padding:15px;border-radius:10px">View the invitation</a>
+            <button onClick="{{ restart }}" style="cursor:pointer;background:transparent;border:none;color:var(--p-accent-2);font-family:'Hanken Grotesk';font-weight:600;font-size:13px;padding:10px;margin-top:2px">Change my response</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="position:relative;z-index:1;font-size:12px;color:var(--p-muted);margin-top:18px;letter-spacing:.04em">Black Cafe · Miami</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:760},&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { theme:'dark', step:1, rsvp:null, name:'', plus:0 };
+  componentDidMount(){ if(this.props.defaultTheme && this.props.defaultTheme!==this.state.theme) this.setState({theme:this.props.defaultTheme}); }
+  choose(v){ this.setState({ rsvp:v, step:2 }); }
+  renderVals(){
+    const s=this.state;
+    const seg=(k)=>{const on=s.rsvp===k;const c={yes:'#5DCAA5',maybe:'#E0A867',no:'#E0705F'}[k];return{bg:on?'color-mix(in srgb,'+c+' 18%, transparent)':'transparent',fg:'var(--p-text)',border:on?c:'var(--p-border)'};};
+    const y=seg('yes'),m=seg('maybe'),n=seg('no');
+    const nm=s.name.trim();
+    const accent='var(--p-accent)', off='var(--p-border)';
+    const doneMap={
+      yes:{title:'You’re in.',body:'See you in the yard'+(nm?', '+nm:'')+'. We’ll text the details.',ring:'#5DCAA5'},
+      maybe:{title:'Noted.',body:'We’ll hold a maybe'+(nm?' for '+nm:'')+' and nudge you closer to the day.',ring:'#E0A867'},
+      no:{title:'Next time.',body:'Thanks for letting us know'+(nm?', '+nm:'')+'. We’ll catch you at the next one.',ring:'#C98A4E'},
+    };
+    const d=doneMap[s.rsvp||'yes'];
+    return {
+      theme:s.theme, themeLabel:s.theme==='dark'?'Dark':'Light',
+      toggleTheme:()=>this.setState(p=>({theme:p.theme==='dark'?'light':'dark'})),
+      isStep1:s.step===1, isStep2:s.step===2, isDone:s.step===3,
+      p1: s.step>=1?accent:off, p2: s.step>=2?accent:off, p3: s.step>=3?accent:off,
+      chooseYes:()=>this.choose('yes'), chooseMaybe:()=>this.choose('maybe'), chooseNo:()=>this.choose('no'),
+      yesBg:y.bg,yesFg:y.fg,yesBorder:y.border,
+      maybeBg:m.bg,maybeFg:m.fg,maybeBorder:m.border,
+      noBg:n.bg,noFg:n.fg,noBorder:n.border,
+      name:s.name, plus:s.plus,
+      onName:(e)=>this.setState({name:e.target.value}),
+      showPlus: s.rsvp!=='no',
+      step2Title: s.rsvp==='no' ? 'Sorry to miss you' : (s.rsvp==='maybe' ? 'Tentatively in' : 'You’re coming!'),
+      incPlus:()=>this.setState(p=>({plus:Math.min(5,p.plus+1)})),
+      decPlus:()=>this.setState(p=>({plus:Math.max(0,p.plus-1)})),
+      back:()=>this.setState({step:1}),
+      finish:()=>this.setState({step:3}),
+      finishLabel: nm ? 'Confirm' : 'Confirm without a name',
+      restart:()=>this.setState({step:1,rsvp:null}),
+      doneTitle:d.title, doneBody:d.body, doneRing:d.ring,
+    };
+  }
+}
+</script>
+</body>
+</html>
