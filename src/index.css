@@ -24,6 +24,10 @@
   --field: #2C0710;          /* input fill */
   --scrim: rgba(38, 3, 6, 0.78); /* hero image scrim (oxblood, both themes) */
   --candle: #E0A867;         /* warm glow / accents */
+  --rail: #1A0204;           /* sidebar bg (host dashboard) */
+  --going: #5DCAA5;          /* RSVP yes bar */
+  --maybe: #E0A867;          /* RSVP maybe bar */
+  --no: #E0705F;             /* RSVP declined bar */
   color-scheme: dark;
 }
 
@@ -43,6 +47,10 @@
   --field: #FFFFFF;          /* input fill */
   --scrim: rgba(38, 3, 6, 0.5); /* hero image scrim (oxblood, both themes) */
   --candle: #A67244;         /* warm glow / accents */
+  --rail: #F0E8DC;           /* sidebar bg (host dashboard) */
+  --going: #3E8E72;          /* RSVP yes bar */
+  --maybe: #A67244;          /* RSVP maybe bar */
+  --no: #C05C4A;             /* RSVP declined bar */
   color-scheme: light;
 }
 

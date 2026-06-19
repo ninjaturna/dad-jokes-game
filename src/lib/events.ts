@@ -50,7 +50,7 @@ export function countGoing(rsvps: RsvpRow[]): number {
 
 export function subscribeRsvps(eventId: string, onChange: () => void) {
   const ch = supabase
-    .channel(`rsvps:${eventId}`)
+    .channel(`rsvps:${eventId}:${crypto.randomUUID()}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'rsvps', filter: `event_id=eq.${eventId}` }, onChange)
     .subscribe()
   return () => { supabase.removeChannel(ch) }

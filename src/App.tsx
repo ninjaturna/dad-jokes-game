@@ -9,6 +9,8 @@ import Lobby from './components/Lobby'
 import GameRoom from './components/GameRoom'
 import EventPage from './pages/EventPage'
 import RsvpFlow from './pages/RsvpFlow'
+import RequireAuth from './components/auth/RequireAuth'
+import HostDashboard from './pages/host/HostDashboard'
 import { GAME_BASE } from './lib/gameRoutes'
 
 function Placeholder() {
@@ -24,10 +26,10 @@ function Placeholder() {
 function App() {
   const { pathname } = useLocation()
   const inGame = pathname.startsWith(GAME_BASE)
-  const hideHeader = inGame || pathname.startsWith('/e/')
+  const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host')
   return (
     <div className="min-h-screen bg-bg-page text-text-primary">
-      {!hideHeader && (
+      {!hideChrome && (
         <header className="flex items-center justify-between px-6 py-5">
           <Wordmark variant="stacked" />
           <ThemeToggle />
@@ -38,6 +40,7 @@ function App() {
         <Route path="/games" element={<GamesHub />} />
         <Route path="/e/:slug" element={<EventPage />} />
         <Route path="/e/:slug/rsvp" element={<RsvpFlow />} />
+        <Route path="/host" element={<RequireAuth><HostDashboard /></RequireAuth>} />
         <Route path={GAME_BASE} element={<LandingPage />} />
         <Route path={`${GAME_BASE}/play`} element={<Home />} />
         <Route path={`${GAME_BASE}/join`} element={<JoinRoom />} />
