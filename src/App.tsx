@@ -18,12 +18,14 @@ import SendInvites from './pages/host/SendInvites'
 import InfoPages from './pages/host/InfoPages'
 import Landing from './pages/Landing'
 import IndexPage from './pages/Index'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import { GAME_BASE } from './lib/gameRoutes'
 
 function App() {
   const { pathname } = useLocation()
   const inGame = pathname.startsWith(GAME_BASE)
-  const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host') || pathname === '/'
+  const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host') || pathname === '/' || pathname === '/privacy' || pathname === '/terms'
   return (
     <div className="min-h-screen bg-bg-page text-text-primary">
       {!hideChrome && (
@@ -34,6 +36,8 @@ function App() {
       )}
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/index" element={<IndexPage />} />
         <Route path="/games" element={<GamesHub />} />
         <Route path="/e/:slug" element={<EventPage />} />

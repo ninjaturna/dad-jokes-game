@@ -29,6 +29,7 @@ export default function RsvpFlow() {
   const [rsvp, setRsvp] = useState<RsvpResponse | null>(null)
   const [name, setName] = useState('')
   const [plus, setPlus] = useState(0)
+  const [smsConsent, setSmsConsent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export default function RsvpFlow() {
   async function finish() {
     if (!rsvp || !event) return
     setSubmitting(true)
-    try { await submitRsvp({ eventId: event.id, name, response: rsvp, plusOnes: showPlus ? plus : 0 }); setStep(3) }
+    try { await submitRsvp({ eventId: event.id, name, response: rsvp, plusOnes: showPlus ? plus : 0, smsConsent }); setStep(3) }
     finally { setSubmitting(false) }
   }
 
@@ -126,6 +127,14 @@ export default function RsvpFlow() {
                   </div>
                 </div>
               )}
+              <label className="mb-4 flex cursor-pointer items-start gap-2.5">
+                <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)}
+                  className="mt-0.5 flex-none accent-[var(--accent)]" />
+                <span className="text-[12.5px] leading-[1.5] text-text-muted">
+                  Text me about this event. Msg &amp; data rates may apply, reply STOP to opt out. See our{' '}
+                  <Link to="/privacy" className="text-accent-2 no-underline">Privacy Policy</Link>.
+                </span>
+              </label>
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="min-h-[44px] rounded-[10px] border border-border px-5 py-[15px] text-[15px] font-semibold text-text-primary">Back</button>
                 <button onClick={finish} disabled={submitting} className="min-h-[44px] flex-1 rounded-[10px] bg-accent px-5 py-[15px] text-base font-bold text-white disabled:opacity-60">

@@ -24,7 +24,7 @@ function parseCSV(text: string): Array<{ name: string; email?: string; phone?: s
   const hasHeader = first.includes('name') || first.includes('email') || first.includes('first')
   const dataLines = hasHeader ? lines.slice(1) : lines
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const phoneRe = /^[\d\s\+\-\(\)]{7,}$/
+  const phoneRe = /^[\d\s+\-()]{7,}$/
   return dataLines.flatMap((line) => {
     const parts = line.split(',').map((p) => p.trim().replace(/^"|"$/g, ''))
     const [a, b, c] = parts

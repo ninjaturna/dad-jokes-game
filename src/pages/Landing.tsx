@@ -15,12 +15,13 @@ function chip(iso: string | null, tz: string) {
 export default function Landing() {
   const [events, setEvents] = useState<EventRow[]>([])
   const [contact, setContact] = useState('')
+  const [smsConsent, setSmsConsent] = useState(false)
   const [joined, setJoined] = useState(false)
   useEffect(() => { getUpcomingPublicEvents().then(setEvents) }, [])
 
   async function submit() {
     if (!contact.trim()) return
-    try { await joinList(contact); setJoined(true) } catch { /* ignore */ }
+    try { await joinList(contact, smsConsent); setJoined(true) } catch { /* ignore */ }
   }
 
   const accents = ['var(--candle)', 'var(--accent-2)', '#A67244']
@@ -191,7 +192,15 @@ export default function Landing() {
                 Join
               </button>
             </div>
-            <p className="mt-4 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
+            <label className="mx-auto mt-4 flex max-w-[460px] cursor-pointer items-start gap-2.5 text-left">
+              <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)}
+                className="mt-0.5 flex-none accent-[var(--accent)]" />
+              <span className="text-[12.5px] leading-[1.5]" style={{ color: 'var(--text-muted)' }}>
+                Text me about gatherings. Msg &amp; data rates may apply, reply STOP to opt out. See our{' '}
+                <Link to="/privacy" className="text-accent-2 no-underline">Privacy Policy</Link>.
+              </span>
+            </label>
+            <p className="mt-3 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
               No spam. Just the next gathering.
             </p>
           </>
@@ -201,9 +210,12 @@ export default function Landing() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-between gap-5 px-8 py-10">
           <Wordmark variant="inline" iconSize={40} />
-          <span className="text-[12.5px] tracking-[0.04em]" style={{ color: 'var(--text-muted)' }}>
-            blackcafe.miami · est. 2026
-          </span>
+          <div className="flex flex-wrap items-center gap-4 text-[12.5px] tracking-[0.04em]" style={{ color: 'var(--text-muted)' }}>
+            <span>blackcafe.miami · est. 2026</span>
+            <span style={{ color: 'var(--border)' }}>·</span>
+            <Link to="/privacy" className="no-underline" style={{ color: 'var(--text-muted)' }}>Privacy</Link>
+            <Link to="/terms" className="no-underline" style={{ color: 'var(--text-muted)' }}>Terms</Link>
+          </div>
         </div>
       </footer>
     </div>

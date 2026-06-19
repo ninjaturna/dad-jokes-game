@@ -9,7 +9,7 @@ export async function getUpcomingPublicEvents(): Promise<EventRow[]> {
   return (data as EventRow[]) ?? []
 }
 
-export async function joinList(contact: string) {
-  const { error } = await supabase.from('subscribers').insert({ contact: contact.trim() })
+export async function joinList(contact: string, smsConsent: boolean) {
+  const { error } = await supabase.from('subscribers').insert({ contact: contact.trim(), sms_consent: smsConsent })
   if (error) throw error
 }

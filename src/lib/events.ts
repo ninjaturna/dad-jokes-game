@@ -23,6 +23,7 @@ export async function submitRsvp(input: {
   response: RsvpResponse
   plusOnes?: number
   email?: string
+  smsConsent?: boolean
 }): Promise<RsvpRow> {
   const device_id = getDeviceId()
   const existing = await getMyRsvp(input.eventId)
@@ -32,6 +33,7 @@ export async function submitRsvp(input: {
     response: input.response,
     plus_ones: input.plusOnes ?? 0,
     email: input.email ?? null,
+    sms_consent: input.smsConsent ?? false,
     device_id,
   }
   if (existing) {

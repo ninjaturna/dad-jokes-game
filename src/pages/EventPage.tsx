@@ -97,6 +97,7 @@ export default function EventPage() {
   const [name, setName] = useState('')
   const [choice, setChoice] = useState<RsvpResponse | null>(null)
   const [plus, setPlus] = useState(0)
+  const [smsConsent, setSmsConsent] = useState(false)
   const [sent, setSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -135,7 +136,7 @@ export default function EventPage() {
   async function onSubmit() {
     if (!choice || !name.trim() || !event) return
     setSubmitting(true)
-    try { await submitRsvp({ eventId: event.id, name, response: choice, plusOnes: plus }); setSent(true) }
+    try { await submitRsvp({ eventId: event.id, name, response: choice, plusOnes: plus, smsConsent }); setSent(true) }
     finally { setSubmitting(false) }
   }
 
@@ -267,9 +268,17 @@ export default function EventPage() {
                   </div>
                 </div>
               )}
+              <label className="mb-4 flex cursor-pointer items-start gap-2.5">
+                <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)}
+                  className="mt-0.5 flex-none accent-[var(--accent)]" />
+                <span className="text-[12.5px] leading-[1.5] text-text-muted">
+                  {"Text me about this event. Msg & data rates may apply, reply STOP to opt out. See our "}
+                  <Link to="/privacy" className="text-accent-2 no-underline">Privacy Policy</Link>.
+                </span>
+              </label>
               <button onClick={onSubmit} disabled={!choice || !name.trim() || submitting}
                 className="w-full rounded-control bg-accent py-4 text-base font-bold text-white disabled:opacity-60">
-                {submitting ? 'Sending…' : choice ? 'I’m in' : 'Pick a response'}
+                {submitting ? "Sending…" : choice ? "I’m in" : "Pick a response"}
               </button>
             </div>
           )}
