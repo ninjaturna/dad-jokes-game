@@ -1,19 +1,22 @@
 // Supabase Edge Function — deferred: deploy with `supabase functions deploy send-sms`
-// and set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_MESSAGING_SERVICE_SID.
+// and set TWILIO_ACCOUNT_SID, TWILIO_API_KEY_SID, TWILIO_API_KEY_SECRET, TWILIO_MESSAGING_SERVICE_SID.
 // Until then the client treats it as "not configured".
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 serve(async (req) => {
   const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID')
-  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN')
-  const messagingServiceSid = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID')
+  const apiKeySid = Deno.env.get('TWILIO_API_KEY_SID')
+  const apiKeySecret = Deno.env.get('TWILIO_API_KEY_SECRET')
+  const msid = Deno.env.get('TWILIO_MESSAGING_SERVICE_SID')
 
-  if (!accountSid || !authToken || !messagingServiceSid) {
+  if (!accountSid || !apiKeySid || !apiKeySecret || !msid) {
     return new Response(JSON.stringify({ configured: false, delivered: 0 }), {
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  const auth = 'Basic ' + btoa(`${apiKeySid}:${apiKeySecret}`)
 
   const { eventId, listIds, note } = await req.json()
   const supabase = createClient(
@@ -44,21 +47,17 @@ serve(async (req) => {
   let delivered = 0
 
   for (const r of recipients) {
-    const body = `${note}\n\nRSVP — ${event.title}: ${link}`
-    const params = new URLSearchParams({
+    const body = new URLSearchParams({
       To: r.phone,
-      MessagingServiceSid: messagingServiceSid,
-      Body: body,
+      MessagingServiceSid: msid,
+      Body: `Black Cafe @ Marly's Yard: ${note} RSVP: ${link}`,
     })
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
       {
         method: 'POST',
-        headers: {
-          Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
+        headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
       },
     )
     if (res.ok) delivered++

@@ -196,8 +196,11 @@ export default function Landing() {
               <input type="checkbox" checked={smsConsent} onChange={(e) => setSmsConsent(e.target.checked)}
                 className="mt-0.5 flex-none accent-[var(--accent)]" />
               <span className="text-[12.5px] leading-[1.5]" style={{ color: 'var(--text-muted)' }}>
-                Text me about gatherings. Msg &amp; data rates may apply, reply STOP to opt out. See our{' '}
-                <Link to="/privacy" className="text-accent-2 no-underline">Privacy Policy</Link>.
+                {"Text me about Black Cafe @ Marly's Yard gatherings — invitations, reminders & updates (about 1–4 msgs/month). Msg & data rates may apply. Reply HELP for help, STOP to opt out. See our "}
+                <Link to="/terms" className="text-accent-2 no-underline">Terms</Link>
+                {" & "}
+                <Link to="/privacy" className="text-accent-2 no-underline">Privacy Policy</Link>
+                {"."}
               </span>
             </label>
             <p className="mt-3 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>

@@ -53,6 +53,8 @@ export default function Guests() {
   const [editListId, setEditListId] = useState<string | null>(null)
   const [editListName, setEditListName] = useState('')
   const [importStatus, setImportStatus] = useState<string | null>(null)
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set())
+  const [optimisticMembers, setOptimisticMembers] = useState<Record<string, Set<string>>>({})
   const csvInputRef = useRef<HTMLInputElement>(null)
 
   const reload = useCallback(async () => {
@@ -82,9 +84,22 @@ export default function Guests() {
   }
 
   async function handleToggleMember(guestId: string, isMember: boolean) {
-    if (!addListId) return
-    await toggleListMember(addListId, guestId, isMember)
-    await reload()
+    if (!addListId || togglingIds.has(guestId)) return
+    setTogglingIds((s) => new Set(s).add(guestId))
+    setOptimisticMembers((prev) => {
+      const next = { ...prev }
+      const cur = new Set(next[addListId] ?? [])
+      isMember ? cur.delete(guestId) : cur.add(guestId)
+      next[addListId] = cur
+      return next
+    })
+    try {
+      await toggleListMember(addListId, guestId, isMember)
+      await reload()
+    } finally {
+      setTogglingIds((s) => { const n = new Set(s); n.delete(guestId); return n })
+      setOptimisticMembers((prev) => { const n = { ...prev }; delete n[addListId]; return n })
+    }
   }
 
   async function handleRenameList(listId: string) {
@@ -415,10 +430,15 @@ export default function Guests() {
               {contacts.length === 0 ? (
                 <p className="text-[13px] px-2 py-4" style={{ color: 'var(--text-muted)' }}>No contacts yet — add some first.</p>
               ) : contacts.map((c, i) => {
-                const isMember = addList.members.some((m) => m.id === c.id)
+                const optimistic = optimisticMembers[addListId ?? '']
+                const isMember = optimistic
+                  ? optimistic.has(c.id)
+                  : addList.members.some((m) => m.id === c.id)
+                const isToggling = togglingIds.has(c.id)
                 return (
                   <button key={c.id} onClick={() => handleToggleMember(c.id, isMember)}
-                    className="flex items-center gap-3 text-left px-3 py-[10px] rounded-[10px] cursor-pointer"
+                    disabled={isToggling}
+                    className="flex items-center gap-3 text-left px-3 py-[10px] rounded-[10px] cursor-pointer disabled:opacity-60"
                     style={{ border: `1px solid ${isMember ? 'var(--accent-2)' : 'var(--border)'}`, background: isMember ? 'color-mix(in srgb,var(--accent-2) 12%, transparent)' : 'transparent' }}>
                     <span className="flex-none w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-white text-[12px]"
                       style={{ background: avatarColor(i) }}>
@@ -427,7 +447,7 @@ export default function Guests() {
                     <span className="flex-1 text-[14px] font-semibold text-text-primary">{c.name}</span>
                     <span className="flex-none w-[22px] h-[22px] rounded-[6px] flex items-center justify-center text-[13px] font-bold"
                       style={{ border: `1.5px solid ${isMember ? 'var(--accent-2)' : 'var(--border)'}`, background: isMember ? 'var(--accent-2)' : 'transparent', color: '#260306' }}>
-                      {isMember ? '✓' : ''}
+                      {isToggling ? '…' : isMember ? '✓' : ''}
                     </span>
                   </button>
                 )

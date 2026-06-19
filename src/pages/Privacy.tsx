@@ -67,6 +67,9 @@ export default function Privacy() {
             <p>
               We do not sell, rent, or share your personal information with third parties for their own marketing purposes. Your data may be processed by our service providers (hosting, database, email delivery, and SMS delivery) solely to operate this service.
             </p>
+            <p className="mt-3">
+              We do not share mobile opt-in information or phone numbers with third parties or affiliates for marketing or promotional purposes.
+            </p>
           </section>
 
           <section>
