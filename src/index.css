@@ -21,6 +21,9 @@
   --danger: #A62F24;
   --success: #5DCAA5;
   --shadow-card: 0 8px 24px rgba(20, 2, 4, 0.35);
+  --field: #2C0710;          /* input fill */
+  --scrim: rgba(38, 3, 6, 0.78); /* hero image scrim (oxblood, both themes) */
+  --candle: #E0A867;         /* warm glow / accents */
   color-scheme: dark;
 }
 
@@ -37,6 +40,9 @@
   --danger: #A62F24;
   --success: #315955;
   --shadow-card: 0 12px 28px rgba(38, 3, 6, 0.10);
+  --field: #FFFFFF;          /* input fill */
+  --scrim: rgba(38, 3, 6, 0.5); /* hero image scrim (oxblood, both themes) */
+  --candle: #A67244;         /* warm glow / accents */
   color-scheme: light;
 }
 

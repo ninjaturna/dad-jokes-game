@@ -56,7 +56,7 @@ React 19 + TypeScript + Vite · Tailwind v3 (npm) · Supabase (data/auth/realtim
 **Files:** new `marlys-yard-supabase-schema.sql`; `src/lib/supabase.ts` stays; regenerate types.
 **Depends on:** CC-1.
 **Test gate:** schema applies clean; RLS enabled on all (Security Advisor clean); a test event + RSVP round-trips.
-**Watch for:** run SQL statements individually (not as one block); UUIDs without brackets; `ALTER PUBLICATION supabase_realtime ADD TABLE ...` for realtime tables; create tables before adding circular FKs; no-account RSVP means anon insert policy on `rsvps` scoped to a valid event/shortlink.
+**Watch for:** run SQL statements individually (not as one block); UUIDs without brackets; `ALTER PUBLICATION supabase_realtime ADD TABLE ...` for realtime tables; create tables before adding circular FKs; no-account RSVP means anon INSERT **and UPDATE** policies on `rsvps` scoped to a published event (UPDATE is required so guests can change their response — added during CC-4, mirrors the `potluck_claim` pattern).
 
 ### CC-4 · Core guest flow  *(MVP — the thing that must work)*
 **Goal:** A guest opens a shortlink and RSVPs with no account.

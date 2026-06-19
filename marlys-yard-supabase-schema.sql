@@ -229,6 +229,8 @@ $$ language sql stable;
 -- rsvps: public read + insert for published events; host full via event ownership
 create policy rsvps_public_read on rsvps for select using (event_is_published(event_id));
 create policy rsvps_public_insert on rsvps for insert with check (event_is_published(event_id));
+-- Guests change their own RSVP (update-if-exists, device de-duped) on published events.
+create policy rsvps_public_update on rsvps for update using (event_is_published(event_id)) with check (event_is_published(event_id));
 create policy rsvps_host_all on rsvps for all
   using (exists (select 1 from events e where e.id = rsvps.event_id and e.host_id = auth.uid()))
   with check (exists (select 1 from events e where e.id = rsvps.event_id and e.host_id = auth.uid()));
