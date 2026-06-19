@@ -4,7 +4,82 @@ import Crest from '../components/brand/Crest'
 import ThemeToggle from '../components/ThemeToggle'
 import { downloadICS } from '../lib/ics'
 import { getEventBySlug, getRsvps, getMyRsvp, submitRsvp, countGoing, subscribeRsvps } from '../lib/events'
+import { getInfoPages, INFO_TYPES, type InfoPageRow, type InfoItem } from '../lib/infoPages'
 import type { EventRow, RsvpRow, RsvpResponse } from '../types/events'
+
+function renderInfoItems(page: InfoPageRow) {
+  const items = page.body.items.filter((it: InfoItem) => it.a || it.b)
+  if (items.length === 0) return null
+  switch (page.type) {
+    case 'itinerary':
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {items.map((r: InfoItem, i: number) => (
+            <div key={i} style={{ display: 'flex', gap: 14, paddingBottom: 18 }}>
+              <div style={{ flex: 'none', width: 62, textAlign: 'right', fontFamily: 'Archivo', fontWeight: 700, fontSize: 12.5, color: 'var(--accent)', fontVariantNumeric: 'tabular-nums', paddingTop: 1 }}>{r.a || '—'}</div>
+              <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--accent-2)', marginTop: 3, display: 'block', flexShrink: 0 }} />
+                {i < items.length - 1 && <span style={{ flex: 1, width: 1.5, background: 'var(--border)', marginTop: 3, display: 'block' }} />}
+              </div>
+              <div style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.4 }}>{r.b}</div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'tracklist':
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+          {items.map((r: InfoItem, i: number) => (
+            <div key={i} style={{ display: 'flex', gap: 13, alignItems: 'baseline' }}>
+              <span style={{ flex: 'none', fontFamily: 'Archivo', fontWeight: 800, fontSize: 14, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', width: 22 }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600 }}>{r.a || '—'}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{r.b}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'menu':
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {items.map((r: InfoItem, i: number) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 10.5, letterSpacing: '.18em', color: 'var(--accent)', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase' }}>{r.a || '—'}</div>
+              <div style={{ fontFamily: 'Archivo', fontWeight: 600, fontSize: 16 }}>{r.b}</div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'games':
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+          {items.map((r: InfoItem, i: number) => (
+            <div key={i} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '11px 13px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <span style={{ flex: 'none', color: 'var(--accent-2)', fontSize: 14 }}>◆</span>
+              <div>
+                <div style={{ fontSize: 14.5, fontWeight: 600 }}>{r.a || '—'}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{r.b}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    case 'custom':
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {items.map((r: InfoItem, i: number) => (
+            <div key={i}>
+              <div style={{ fontFamily: 'Archivo', fontWeight: 700, fontSize: 15, marginBottom: 5 }}>{r.a || '—'}</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{r.b}</div>
+            </div>
+          ))}
+        </div>
+      )
+  }
+}
 
 function fmtDate(iso: string, tz: string): string {
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: tz }).format(new Date(iso))
@@ -18,6 +93,7 @@ export default function EventPage() {
   const [event, setEvent] = useState<EventRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [rsvps, setRsvps] = useState<RsvpRow[]>([])
+  const [infoPages, setInfoPages] = useState<InfoPageRow[]>([])
   const [name, setName] = useState('')
   const [choice, setChoice] = useState<RsvpResponse | null>(null)
   const [plus, setPlus] = useState(0)
@@ -38,6 +114,7 @@ export default function EventPage() {
         const mine = await getMyRsvp(ev.id)
         if (mine) { setName(mine.name); setChoice(mine.response); setPlus(mine.plus_ones); setSent(true) }
         unsub = subscribeRsvps(ev.id, () => refresh(ev.id))
+          getInfoPages(ev.id).then(setInfoPages)
       }
     })()
     return () => unsub()
@@ -242,6 +319,23 @@ export default function EventPage() {
             )}
           </div>
         )}
+
+        {/* info pages */}
+        {infoPages.filter((p) => p.body.items.some((it) => it.a || it.b)).map((page) => {
+          const rendered = renderInfoItems(page)
+          if (!rendered) return null
+          return (
+            <div key={page.id} className="mt-7">
+              <div className="mb-[6px] font-sans text-[11px] font-semibold tracking-[.2em]" style={{ color: 'var(--text-muted)' }}>
+                {INFO_TYPES[page.type].name.toUpperCase()}
+              </div>
+              <h2 className="m-0 mb-5 font-display font-extrabold text-[24px] tracking-[-0.01em]">{page.title}</h2>
+              <div className="rounded-card border border-border p-5" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
+                {rendered}
+              </div>
+            </div>
+          )
+        })}
 
         {/* footer actions */}
         <div className="mt-7 flex justify-center gap-4">

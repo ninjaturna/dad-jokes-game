@@ -321,6 +321,21 @@ export default function ManageEvent() {
           </div>
         </section>
 
+        {/* INFO PAGES */}
+        <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-display font-bold text-base mb-1.5">Info pages</div>
+              <p className="text-[13px] m-0" style={{ color: 'var(--text-muted)' }}>
+                Itinerary, menu, track list, and more — attached to this event's invite.
+              </p>
+            </div>
+            <Link to={`/host/event/${id}/info`} className="no-underline font-semibold text-[13.5px]" style={{ color: 'var(--accent-2)' }}>
+              Edit info pages →
+            </Link>
+          </div>
+        </section>
+
         {/* ADD TO CALENDAR */}
         <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
           <div className="font-display font-bold text-base mb-1.5">Add to calendar</div>
