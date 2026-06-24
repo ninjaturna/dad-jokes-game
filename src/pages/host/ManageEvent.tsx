@@ -8,6 +8,8 @@ import {
   getPotluckSlots, addPotluckSlot, toggleClaim, updatePotluckEnabled,
   type DatePoll, type Slot,
 } from '../../lib/manageEvent'
+import { useAuth } from '../../hooks/useAuth'
+import { getHostLocations } from '../../lib/host'
 import type { EventRow } from '../../types/events'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -41,6 +43,11 @@ export default function ManageEvent() {
   const [newSlot, setNewSlot] = useState('')
   const [addingSlot, setAddingSlot] = useState(false)
   const [enablingPotluck, setEnablingPotluck] = useState(false)
+  const [publishSaving, setPublishSaving] = useState(false)
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+
+  const { user } = useAuth()
+  useEffect(() => { if (user) getHostLocations(user.id).then(setLocationSuggestions) }, [user])
 
   async function reload(eid: string) {
     const ev = await getEventById(eid)
@@ -63,6 +70,20 @@ export default function ManageEvent() {
 
   const orig = toInputs(event.starts_at)
   const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility
+
+  async function handlePublish() {
+    if (!id) return
+    setPublishSaving(true)
+    try { await updateEventDetails(id, { status: 'published', visibility }); await reload(id) }
+    finally { setPublishSaving(false) }
+  }
+
+  async function handleUnpublish() {
+    if (!id) return
+    setPublishSaving(true)
+    try { await updateEventDetails(id, { status: 'draft' }); await reload(id) }
+    finally { setPublishSaving(false) }
+  }
 
   async function save() {
     if (!id) return
@@ -150,6 +171,59 @@ export default function ManageEvent() {
           <h1 className="font-display font-extrabold text-[32px] tracking-[-0.02em] m-0">{event.title}</h1>
         </div>
 
+        {/* PUBLISH CONTROL */}
+        <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
+          {event.status === 'draft' ? (
+            <>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <div className="font-display font-bold text-base mb-1">Publish event</div>
+                  <p className="text-[13px] m-0" style={{ color: 'var(--text-muted)' }}>
+                    Make this event live so guests can view and RSVP.
+                  </p>
+                </div>
+                <button onClick={handlePublish} disabled={publishSaving}
+                  className="flex-none text-white font-sans text-[14px] font-bold px-[22px] py-[11px] rounded-[8px] border-none cursor-pointer disabled:opacity-50"
+                  style={{ background: 'var(--accent)' }}>
+                  {publishSaving ? 'Publishing…' : 'Publish event'}
+                </button>
+              </div>
+              <div className="mt-4">
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Visibility</label>
+                <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'private' | 'unlisted' | 'public')}
+                  className={inputCls} style={field}>
+                  <option value="unlisted">Unlisted (link-only)</option>
+                  <option value="public">Public — shows on landing page</option>
+                  <option value="private">Private</option>
+                </select>
+                <p className="mt-2 m-0 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+                  Public shows on the landing page; unlisted is link-only.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="font-display font-bold text-base">Published</div>
+                  <span className="text-[11.5px] font-semibold px-2.5 py-0.5 rounded-pill"
+                    style={{ background: 'color-mix(in srgb,var(--accent-2) 18%, transparent)', color: 'var(--accent-2)' }}>
+                    {visibility === 'public' ? 'Public' : visibility === 'unlisted' ? 'Unlisted' : 'Private'}
+                  </span>
+                </div>
+                <p className="text-[13px] m-0" style={{ color: 'var(--text-muted)' }}>
+                  Live — guests can view and RSVP. Change visibility in Edit details below.
+                </p>
+              </div>
+              <button onClick={handleUnpublish} disabled={publishSaving}
+                className="flex-none border border-border font-sans text-[13px] font-semibold px-4 py-[9px] rounded-[8px] cursor-pointer disabled:opacity-50"
+                style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
+                {publishSaving ? 'Updating…' : 'Unpublish'}
+              </button>
+            </div>
+          )}
+        </section>
+
         {/* EDIT DETAILS */}
         <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
           <div className="font-display font-bold text-base mb-[18px]">Edit details</div>
@@ -169,7 +243,11 @@ export default function ManageEvent() {
             <div>
               <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
               <input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Venue name"
-                className={inputCls} style={field} />
+                list="loc-suggestions" className={inputCls} style={field} />
+              {/* TODO: Places validation (needs VITE_GOOGLE_MAPS_KEY) */}
+              <datalist id="loc-suggestions">
+                {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
+              </datalist>
             </div>
           </div>
 

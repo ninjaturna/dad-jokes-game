@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import { getHostGuests, createEvent, type GuestRow, type NewEventInput } from '../../lib/createEvent'
+import { getHostLocations } from '../../lib/host'
 
 const TAGS = [
   { id: 'Black Cafe', dot: '#D96B43' },
@@ -37,6 +38,7 @@ export default function CreateEvent() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
 
   const [f, setF] = useState<NewEventInput>({
     title: '', date: '', time: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
@@ -49,7 +51,11 @@ export default function CreateEvent() {
 
   function set<K extends keyof NewEventInput>(k: K, v: NewEventInput[K]) { setF((p) => ({ ...p, [k]: v })) }
 
-  useEffect(() => { if (user) getHostGuests(user.id).then(setGuests) }, [user])
+  useEffect(() => {
+    if (!user) return
+    getHostGuests(user.id).then(setGuests)
+    getHostLocations(user.id).then(setLocationSuggestions)
+  }, [user])
 
   const slugPreview = useMemo(() => {
     const base = f.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'new'
@@ -165,7 +171,11 @@ export default function CreateEvent() {
             </div>
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
             <input value={f.place} onChange={(e) => set('place', e.target.value)} placeholder="The Yard · Little Haiti, Miami"
-              className={inputCls} style={field} />
+              list="loc-suggestions" className={inputCls} style={field} />
+            {/* TODO: Places validation (needs VITE_GOOGLE_MAPS_KEY) */}
+            <datalist id="loc-suggestions">
+              {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
+            </datalist>
           </section>
 
           {/* SERIES & TAGS */}

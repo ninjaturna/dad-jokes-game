@@ -314,9 +314,9 @@ export default function SendInvites() {
             <div className="rounded-[10px] px-4 py-[14px] text-[13.5px] leading-[1.55]"
               style={{ background: 'color-mix(in srgb,var(--candle) 14%, transparent)', border: '1px solid var(--candle)' }}>
               {sentChannel === 'sms' ? (
-                <><strong style={{ color: 'var(--candle)' }}>Text isn't connected yet</strong> — set <code className="text-[12px]">TWILIO_ACCOUNT_SID</code>, <code className="text-[12px]">TWILIO_AUTH_TOKEN</code>, and <code className="text-[12px]">TWILIO_MESSAGING_SERVICE_SID</code> to start sending.</>
+                <><strong style={{ color: 'var(--candle)' }}>Text isn't connected yet</strong> — check the Twilio secrets in Supabase.</>
               ) : (
-                <><strong style={{ color: 'var(--candle)' }}>Email isn't connected yet</strong> — set <code className="text-[12px]">SENDGRID_API_KEY</code> to start sending. Your invite is saved as a draft.</>
+                <><strong style={{ color: 'var(--candle)' }}>Email isn't connected yet</strong> — set <code className="text-[12px]">SENDGRID_API_KEY</code> in Supabase.</>
               )}
             </div>
           )}

@@ -53,3 +53,13 @@ export async function getPendingRsvps(hostId: string): Promise<PendingRsvp[]> {
 export async function setRsvpStatus(id: string, status: 'confirmed' | 'declined') {
   await supabase.from('rsvps').update({ status }).eq('id', id)
 }
+
+export async function updateContact(id: string, fields: { name: string; email?: string | null; phone?: string | null; sms_consent?: boolean }) {
+  const { error } = await supabase.from('guests').update(fields).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteContact(id: string) {
+  const { error } = await supabase.from('guests').delete().eq('id', id)
+  if (error) throw error
+}

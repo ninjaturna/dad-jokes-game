@@ -4,7 +4,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getContacts, addContact, getLists, createList, updateList, toggleListMember,
-  getPendingRsvps, setRsvpStatus,
+  getPendingRsvps, setRsvpStatus, updateContact, deleteContact,
   type Contact, type ListWithMembers, type PendingRsvp,
 } from '../../lib/guests'
 
@@ -55,6 +55,14 @@ export default function Guests() {
   const [importStatus, setImportStatus] = useState<string | null>(null)
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set())
   const [optimisticMembers, setOptimisticMembers] = useState<Record<string, Set<string>>>({})
+  const [editContact, setEditContact] = useState<Contact | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editSmsConsent, setEditSmsConsent] = useState(false)
+  const [editSaving, setEditSaving] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const csvInputRef = useRef<HTMLInputElement>(null)
 
   const reload = useCallback(async () => {
@@ -126,6 +134,38 @@ export default function Guests() {
       setImportStatus('Import failed — check your CSV format.')
     }
     setTimeout(() => setImportStatus(null), 4000)
+  }
+
+  function openEdit(c: Contact) {
+    setEditContact(c)
+    setEditName(c.name)
+    setEditEmail(c.email ?? '')
+    setEditPhone(c.phone ?? '')
+    setEditSmsConsent(c.sms_consent)
+  }
+
+  async function handleEditSave() {
+    if (!editContact || !editName.trim()) return
+    setEditSaving(true)
+    try {
+      await updateContact(editContact.id, {
+        name: editName.trim(),
+        email: editEmail.trim() || null,
+        phone: editPhone.trim() || null,
+        sms_consent: editSmsConsent,
+      })
+      setEditContact(null)
+      await reload()
+    } finally { setEditSaving(false) }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    try {
+      await deleteContact(id)
+      setConfirmDeleteId(null)
+      await reload()
+    } finally { setDeletingId(null) }
   }
 
   async function handleApprove(id: string) {
@@ -351,13 +391,25 @@ export default function Guests() {
                       <div className="text-[15px] font-semibold">{c.name}</div>
                       <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>{c.email ?? c.phone ?? ''}</div>
                     </div>
-                    <div className="flex gap-1.5 flex-wrap justify-end max-w-[300px]">
+                    <div className="flex gap-1.5 flex-wrap justify-end max-w-[200px]">
                       {chips.map((l, j) => (
                         <span key={l.id} className="text-[11px] font-semibold px-[10px] py-[3px] rounded-pill"
                           style={{ background: `color-mix(in srgb,${LIST_COLORS[j % LIST_COLORS.length]} 20%, transparent)`, color: 'var(--text-primary)' }}>
                           {l.name}
                         </span>
                       ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <button onClick={() => openEdit(c)}
+                        className="border border-border text-text-secondary font-sans text-[12px] font-semibold px-2.5 py-[6px] rounded-[7px] cursor-pointer whitespace-nowrap"
+                        style={{ background: 'transparent' }}>
+                        Edit
+                      </button>
+                      <button onClick={() => setConfirmDeleteId(c.id)}
+                        className="border border-border font-sans text-[13px] font-semibold px-2.5 py-[6px] rounded-[7px] cursor-pointer"
+                        style={{ background: 'transparent', color: 'var(--text-muted)' }}>
+                        ✕
+                      </button>
                     </div>
                   </div>
                 )
@@ -409,6 +461,86 @@ export default function Guests() {
           )
         )}
       </div>
+
+      {/* EDIT CONTACT MODAL */}
+      {editContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(15,1,3,.6)', backdropFilter: 'blur(3px)' }}
+          onClick={() => setEditContact(null)}>
+          <div className="w-full max-w-[440px] border border-border rounded-[16px] overflow-hidden"
+            style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="px-[22px] py-5 border-b border-border">
+              <div className="font-display font-bold text-[18px]">Edit contact</div>
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Name *</label>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleEditSave()}
+                  placeholder="Full name" className={inp} style={fld} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Email</label>
+                <input value={editEmail} onChange={(e) => setEditEmail(e.target.value)}
+                  type="email" placeholder="Email address" className={inp} style={fld} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Phone</label>
+                <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)}
+                  type="tel" placeholder="Phone number" className={inp} style={fld} />
+              </div>
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input type="checkbox" checked={editSmsConsent} onChange={(e) => setEditSmsConsent(e.target.checked)}
+                  className="mt-0.5 flex-none accent-[var(--accent)]" />
+                <span className="text-[12.5px] leading-[1.5] text-text-muted">
+                  I have their permission to text them about gatherings
+                </span>
+              </label>
+              <div className="flex justify-end gap-2.5 pt-1">
+                <button onClick={() => setEditContact(null)}
+                  className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2.5 rounded-[8px] cursor-pointer"
+                  style={{ background: 'transparent' }}>
+                  Cancel
+                </button>
+                <button onClick={handleEditSave} disabled={editSaving || !editName.trim()}
+                  className="text-white font-sans text-[13px] font-bold px-5 py-2.5 rounded-[8px] disabled:opacity-50 cursor-pointer"
+                  style={{ background: 'var(--accent)', border: 'none' }}>
+                  {editSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRM MODAL */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(15,1,3,.6)', backdropFilter: 'blur(3px)' }}
+          onClick={() => setConfirmDeleteId(null)}>
+          <div className="w-full max-w-[360px] border border-border rounded-[16px] p-6"
+            style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="font-display font-bold text-[17px] mb-2">Remove contact?</div>
+            <p className="text-[13.5px] mb-5 m-0" style={{ color: 'var(--text-muted)' }}>
+              {contacts.find((c) => c.id === confirmDeleteId)?.name} will be removed from your guest book and all lists.
+            </p>
+            <div className="flex gap-2.5">
+              <button onClick={() => setConfirmDeleteId(null)}
+                className="flex-1 border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2.5 rounded-[8px] cursor-pointer"
+                style={{ background: 'transparent' }}>
+                Cancel
+              </button>
+              <button onClick={() => handleDelete(confirmDeleteId)} disabled={deletingId === confirmDeleteId}
+                className="flex-1 font-sans text-[13px] font-bold px-4 py-2.5 rounded-[8px] disabled:opacity-50 cursor-pointer text-white"
+                style={{ background: '#A62F24', border: 'none' }}>
+                {deletingId === confirmDeleteId ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ADD-TO-LIST MODAL */}
       {addList && (

@@ -61,4 +61,9 @@ export async function loadHostDashboard(hostId: string): Promise<HostDashboardDa
   }
 }
 
+export async function getHostLocations(hostId: string): Promise<string[]> {
+  const { data } = await supabase.from('events').select('location_name').eq('host_id', hostId).not('location_name', 'is', null)
+  return [...new Set((data ?? []).map((e) => e.location_name as string).filter(Boolean))]
+}
+
 export async function signOut() { await supabase.auth.signOut() }
