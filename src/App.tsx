@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import ThemeToggle from './components/ThemeToggle'
 import Wordmark from './components/brand/Wordmark'
@@ -22,10 +23,35 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import { GAME_BASE } from './lib/gameRoutes'
 
+const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID
+
 function App() {
   const { pathname } = useLocation()
   const inGame = pathname.startsWith(GAME_BASE)
   const hideChrome = inGame || pathname.startsWith('/e/') || pathname.startsWith('/host') || pathname === '/' || pathname === '/privacy' || pathname === '/terms'
+
+  // one-time GA script injection
+  useEffect(() => {
+    if (!GA_ID) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const win = window as any
+    const s = document.createElement('script')
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+    s.async = true
+    document.head.appendChild(s)
+    win.dataLayer = win.dataLayer || []
+    win.gtag = function (...args: unknown[]) { win.dataLayer.push(args) }
+    win.gtag('js', new Date())
+    win.gtag('config', GA_ID)
+  }, [])
+
+  // page-view on navigation
+  useEffect(() => {
+    if (!GA_ID) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).gtag?.('config', GA_ID, { page_path: pathname })
+  }, [pathname])
+
   return (
     <div className="min-h-screen bg-bg-page text-text-primary">
       {!hideChrome && (

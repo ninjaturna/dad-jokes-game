@@ -25,6 +25,7 @@ export interface EventRow {
   parking_note: string | null
   links: { label: string; url: string }[]
   potluck_enabled: boolean
+  hosted_by: string | null
 }
 
 export interface RsvpRow {

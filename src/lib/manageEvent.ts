@@ -12,6 +12,10 @@ export async function updateEventDetails(id: string, fields: {
   location_name?: string | null
   visibility?: 'private' | 'unlisted' | 'public'
   status?: 'draft' | 'published' | 'passed' | 'cancelled'
+  allow_plus_ones?: boolean
+  plus_one_max?: number
+  audience?: 'all' | 'kid_friendly' | 'adults'
+  hosted_by?: string | null
 }) {
   const { error } = await supabase.from('events').update(fields).eq('id', id)
   if (error) throw error
@@ -69,4 +73,15 @@ export async function toggleClaim(slot: Slot, name: string) {
 export async function updatePotluckEnabled(eventId: string, enabled: boolean) {
   const { error } = await supabase.from('events').update({ potluck_enabled: enabled }).eq('id', eventId)
   if (error) throw error
+}
+
+export async function uploadEventImage(eventId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'png'
+  const path = `${eventId}/${Date.now()}.${ext}`
+  const { error: upErr } = await supabase.storage.from('event-images').upload(path, file, { upsert: true })
+  if (upErr) throw upErr
+  const { data } = supabase.storage.from('event-images').getPublicUrl(path)
+  const { error: updErr } = await supabase.from('events').update({ image_url: data.publicUrl }).eq('id', eventId)
+  if (updErr) throw updErr
+  return data.publicUrl
 }

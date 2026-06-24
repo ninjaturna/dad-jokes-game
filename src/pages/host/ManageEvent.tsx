@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { downloadICS, googleCalUrl } from '../../lib/ics'
@@ -6,6 +6,7 @@ import {
   getEventById, updateEventDetails, confirmedCount,
   getDatePoll, addDateOption, lockDatePoll, createDatePoll,
   getPotluckSlots, addPotluckSlot, toggleClaim, updatePotluckEnabled,
+  uploadEventImage,
   type DatePoll, type Slot,
 } from '../../lib/manageEvent'
 import { useAuth } from '../../hooks/useAuth'
@@ -45,6 +46,12 @@ export default function ManageEvent() {
   const [enablingPotluck, setEnablingPotluck] = useState(false)
   const [publishSaving, setPublishSaving] = useState(false)
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [allowPlusOnes, setAllowPlusOnes] = useState(true)
+  const [plusMax, setPlusMax] = useState(1)
+  const [audience, setAudience] = useState<'all' | 'kid_friendly' | 'adults'>('all')
+  const [hostedBy, setHostedBy] = useState('')
+  const [imageUploading, setImageUploading] = useState(false)
+  const imgInputRef = useRef<HTMLInputElement>(null)
 
   const { user } = useAuth()
   useEffect(() => { if (user) getHostLocations(user.id).then(setLocationSuggestions) }, [user])
@@ -59,6 +66,10 @@ export default function ManageEvent() {
     setTime(t.time)
     setPlace(ev.location_name ?? '')
     setVisibility(ev.visibility)
+    setAllowPlusOnes(ev.allow_plus_ones)
+    setPlusMax(ev.plus_one_max)
+    setAudience(ev.audience)
+    setHostedBy(ev.hosted_by ?? '')
     setGoingN(await confirmedCount(eid))
     setPoll(await getDatePoll(eid))
     setSlots(await getPotluckSlots(eid))
@@ -69,7 +80,7 @@ export default function ManageEvent() {
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   const orig = toInputs(event.starts_at)
-  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility
+  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
 
   async function handlePublish() {
     if (!id) return
@@ -85,10 +96,19 @@ export default function ManageEvent() {
     finally { setPublishSaving(false) }
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !id) return
+    e.target.value = ''
+    setImageUploading(true)
+    try { await uploadEventImage(id, file); await reload(id) }
+    finally { setImageUploading(false) }
+  }
+
   async function save() {
     if (!id) return
     const starts_at = date && time ? new Date(`${date}T${time}`).toISOString() : event!.starts_at
-    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility })
+    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
     await reload(id)
@@ -224,6 +244,40 @@ export default function ManageEvent() {
           )}
         </section>
 
+        {/* EVENT PHOTO */}
+        <section className="border border-border rounded-[14px] overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+          <div className="relative" style={{ aspectRatio: '16/9' }}>
+            {event.image_url ? (
+              <img src={event.image_url} alt="Event" className="w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center"
+                style={{ background: 'repeating-linear-gradient(135deg,#3A0A12,#3A0A12 12px,#451320 12px,#451320 24px)' }}>
+                <span className="font-display text-[11px] tracking-[0.18em]" style={{ color: 'rgba(242,228,214,.5)' }}>
+                  [ EVENT PHOTO ]
+                </span>
+              </div>
+            )}
+            {imageUploading && (
+              <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(15,1,3,.6)' }}>
+                <span className="font-sans text-[13px] font-semibold text-white">Uploading…</span>
+              </div>
+            )}
+          </div>
+          <div className="p-[18px] flex items-center gap-3">
+            <div className="flex-1">
+              <div className="font-display font-bold text-[15px] mb-0.5">Event photo</div>
+              <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>PNG, WebP, or GIF — shown on the invite page.</div>
+            </div>
+            <input ref={imgInputRef} type="file" accept="image/png,image/webp,image/gif,image/jpeg" className="hidden"
+              onChange={handleImageUpload} />
+            <button onClick={() => imgInputRef.current?.click()} disabled={imageUploading}
+              className="flex-none border border-border font-sans text-[13px] font-semibold px-4 py-[9px] rounded-[8px] cursor-pointer disabled:opacity-50"
+              style={{ background: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}>
+              {event.image_url ? 'Change photo' : 'Upload photo'}
+            </button>
+          </div>
+        </section>
+
         {/* EDIT DETAILS */}
         <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
           <div className="font-display font-bold text-base mb-[18px]">Edit details</div>
@@ -263,6 +317,60 @@ export default function ManageEvent() {
               Public events show on the landing page; unlisted are link-only.
             </p>
           </div>
+
+          <div className="mt-4">
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Hosted by</label>
+            <input value={hostedBy} onChange={(e) => setHostedBy(e.target.value)} placeholder="e.g. Marcus & Julia"
+              className={inputCls} style={field} />
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Who's it for</label>
+            <div className="grid grid-cols-3 gap-2.5">
+              {(['all', 'kid_friendly', 'adults'] as const).map((a) => {
+                const label = { all: 'All ages', kid_friendly: 'Kid-friendly', adults: 'Adults only' }[a]
+                const on = audience === a
+                return (
+                  <button key={a} onClick={() => setAudience(a)}
+                    className="font-sans font-semibold text-[13px] py-[11px] px-2 rounded-[10px] text-text-primary cursor-pointer"
+                    style={{ border: `1.5px solid ${on ? 'var(--accent)' : 'var(--border)'}`, background: on ? 'color-mix(in srgb,var(--accent) 18%, transparent)' : 'transparent' }}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between py-[14px] mt-4 border-t border-border">
+            <div>
+              <div className="font-semibold text-[15px]">Allow plus-ones</div>
+              <div className="text-[13px]" style={{ color: 'var(--text-muted)' }}>Guests can bring additional people</div>
+            </div>
+            <button onClick={() => setAllowPlusOnes((v) => !v)}
+              className="relative flex-none cursor-pointer border-none p-0"
+              style={{ width: 52, height: 30, borderRadius: 999, background: allowPlusOnes ? 'var(--accent-2)' : 'var(--border)', transition: 'background .2s' }}>
+              <span className="absolute top-[3px] rounded-full bg-white"
+                style={{ width: 24, height: 24, left: allowPlusOnes ? 25 : 3, transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.3)' }} />
+            </button>
+          </div>
+
+          {allowPlusOnes && (
+            <div className="flex items-center justify-between py-[14px] border-t border-border">
+              <div>
+                <div className="font-semibold text-[15px]">Max per guest</div>
+                <div className="text-[13px]" style={{ color: 'var(--text-muted)' }}>How many extra they can bring</div>
+              </div>
+              <div className="flex items-center gap-[14px]">
+                <button onClick={() => setPlusMax((n) => Math.max(1, n - 1))}
+                  className="w-9 h-9 rounded-[9px] border border-border text-[18px] text-text-primary cursor-pointer"
+                  style={field}>–</button>
+                <span className="font-display font-bold text-[18px] min-w-[30px] text-center tabular-nums">{plusMax}</span>
+                <button onClick={() => setPlusMax((n) => Math.min(10, n + 1))}
+                  className="w-9 h-9 rounded-[9px] border border-border text-[18px] text-text-primary cursor-pointer"
+                  style={field}>+</button>
+              </div>
+            </div>
+          )}
 
           {dirty && (
             <div className="mt-[18px] rounded-[10px] px-4 py-[14px]"
