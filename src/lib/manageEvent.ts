@@ -16,6 +16,7 @@ export async function updateEventDetails(id: string, fields: {
   plus_one_max?: number
   audience?: 'all' | 'kid_friendly' | 'adults'
   hosted_by?: string | null
+  rsvp_by?: string | null
 }) {
   const { error } = await supabase.from('events').update(fields).eq('id', id)
   if (error) throw error

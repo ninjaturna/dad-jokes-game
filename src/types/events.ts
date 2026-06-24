@@ -26,6 +26,7 @@ export interface EventRow {
   links: { label: string; url: string }[]
   potluck_enabled: boolean
   hosted_by: string | null
+  rsvp_by: string | null
 }
 
 export interface RsvpRow {

@@ -46,6 +46,7 @@ export default function ManageEvent() {
   const [enablingPotluck, setEnablingPotluck] = useState(false)
   const [publishSaving, setPublishSaving] = useState(false)
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [rsvpBy, setRsvpBy] = useState('')
   const [allowPlusOnes, setAllowPlusOnes] = useState(true)
   const [plusMax, setPlusMax] = useState(1)
   const [audience, setAudience] = useState<'all' | 'kid_friendly' | 'adults'>('all')
@@ -66,6 +67,7 @@ export default function ManageEvent() {
     setTime(t.time)
     setPlace(ev.location_name ?? '')
     setVisibility(ev.visibility)
+    setRsvpBy(ev.rsvp_by ?? '')
     setAllowPlusOnes(ev.allow_plus_ones)
     setPlusMax(ev.plus_one_max)
     setAudience(ev.audience)
@@ -80,7 +82,7 @@ export default function ManageEvent() {
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   const orig = toInputs(event.starts_at)
-  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
+  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
 
   async function handlePublish() {
     if (!id) return
@@ -108,7 +110,7 @@ export default function ManageEvent() {
   async function save() {
     if (!id) return
     const starts_at = date && time ? new Date(`${date}T${time}`).toISOString() : event!.starts_at
-    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
+    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
     await reload(id)
@@ -303,6 +305,24 @@ export default function ManageEvent() {
                 {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
               </datalist>
             </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">RSVP deadline</label>
+            <div className="flex items-center gap-3">
+              <input type="date" value={rsvpBy} onChange={(e) => setRsvpBy(e.target.value)}
+                className={inputCls + ' flex-1'} style={field} />
+              {rsvpBy && (
+                <button onClick={() => setRsvpBy('')}
+                  className="flex-none text-[12px] font-semibold cursor-pointer border-none bg-transparent"
+                  style={{ color: 'var(--text-muted)' }}>
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="mt-2 m-0 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+              RSVPs lock after this date. Leave blank for no deadline.
+            </p>
           </div>
 
           <div className="mt-4">

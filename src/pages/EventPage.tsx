@@ -133,6 +133,15 @@ export default function EventPage() {
   const going = countGoing(rsvps)
   const seatsLeft = event.capacity != null ? Math.max(0, event.capacity - going) : null
 
+  // Compare local calendar date to rsvp_by (stored as YYYY-MM-DD)
+  const todayLocal = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()
+  const rsvpClosed = !!event.rsvp_by && todayLocal > event.rsvp_by
+
+  function fmtRsvpBy(d: string) {
+    const [y, m, day] = d.split('-').map(Number)
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: y !== new Date().getFullYear() ? 'numeric' : undefined }).format(new Date(y, m - 1, day))
+  }
+
   async function onSubmit() {
     if (!choice || !name.trim() || !event) return
     setSubmitting(true)
@@ -228,6 +237,16 @@ export default function EventPage() {
           </div>
         )}
 
+        {/* RSVP deadline notice */}
+        {event.rsvp_by && !sent && (
+          <div className="mb-3 flex items-center gap-2" style={{ color: rsvpClosed ? 'var(--text-muted)' : 'var(--candle)' }}>
+            <span className="text-[13px]">⏳</span>
+            <span className="font-sans text-[12.5px] font-semibold">
+              {rsvpClosed ? `RSVPs closed ${fmtRsvpBy(event.rsvp_by)}` : `RSVP by ${fmtRsvpBy(event.rsvp_by)}`}
+            </span>
+          </div>
+        )}
+
         {/* RSVP MODULE */}
         <div className="rounded-card border border-border bg-bg-surface p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
           {sent ? (
@@ -239,6 +258,13 @@ export default function EventPage() {
                 <button onClick={() => downloadICS(event)} className="rounded-control border border-text-muted px-4 py-2.5 text-sm font-semibold text-text-primary">Add to calendar</button>
                 <button onClick={() => setSent(false)} className="px-3 py-2.5 text-sm font-semibold text-accent-2">Change response</button>
               </div>
+            </div>
+          ) : rsvpClosed ? (
+            <div className="py-4 text-center">
+              <div className="mb-2 font-display text-[15px] font-bold">RSVPs are closed</div>
+              <p className="m-0 text-[13.5px]" style={{ color: 'var(--text-muted)' }}>
+                The deadline for this event has passed.
+              </p>
             </div>
           ) : (
             <div>

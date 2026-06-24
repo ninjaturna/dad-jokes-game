@@ -46,7 +46,19 @@ export default function RsvpFlow() {
     </div>
   )
 
-  const showPlus = rsvp !== 'no' && event.allow_plus_ones
+  const todayLocal = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,’0’)}-${String(n.getDate()).padStart(2,’0’)}` })()
+  const rsvpClosed = !!event.rsvp_by && todayLocal > event.rsvp_by
+
+  if (rsvpClosed) return (
+    <div className="min-h-screen bg-bg-page text-text-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <Crest size={84} showWord={false} double={false} />
+      <p className="font-display text-2xl">RSVPs are closed.</p>
+      <p className="text-[14px] m-0" style={{ color: ‘var(--text-muted)’ }}>The deadline for this event has passed.</p>
+      <Link to={`/e/${event.slug}`} className="text-accent-2 font-sans text-[13px]">View event page</Link>
+    </div>
+  )
+
+  const showPlus = rsvp !== ‘no’ && event.allow_plus_ones
   const accent = 'var(--accent)'
   const off = 'var(--border)'
 
