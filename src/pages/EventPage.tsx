@@ -199,12 +199,12 @@ export default function EventPage() {
 
         {/* title block */}
         <div className="mb-7 text-center">
-          {event.description && (
-            <div className="mb-4 font-display text-[12px] font-bold tracking-[0.28em] text-accent">{event.description}</div>
-          )}
           <h1 className="m-0 font-display font-extrabold leading-[1.02] tracking-[-0.02em]" style={{ fontSize: 'clamp(38px,8vw,58px)' }}>
             {event.title}
           </h1>
+          {event.description && (
+            <p className="mt-3 mb-0 text-[17px] leading-[1.55] text-text-secondary max-w-[480px] mx-auto">{event.description}</p>
+          )}
         </div>
 
         {/* when / where */}

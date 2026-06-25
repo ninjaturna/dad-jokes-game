@@ -41,7 +41,7 @@ export default function CreateEvent() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
 
   const [f, setF] = useState<NewEventInput>({
-    title: '', date: '', time: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
+    title: '', description: '', date: '', time: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
     tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'all',
     bringNote: '', wearNote: '', parkingNote: '',
     links: [{ label: '', url: '' }],
@@ -157,7 +157,13 @@ export default function CreateEvent() {
             <div className="font-display font-bold text-base mb-[18px]">The basics</div>
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Event name</label>
             <input value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="e.g. Supper on the Patio"
-              className="w-full border border-border text-text-primary font-display font-semibold text-[18px] px-4 py-[14px] rounded-[9px] outline-none mb-[18px]"
+              className="w-full border border-border text-text-primary font-display font-semibold text-[18px] px-4 py-[14px] rounded-[9px] outline-none mb-[14px]"
+              style={field} />
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Description <span className="font-normal text-text-muted">(optional)</span></label>
+            <textarea value={f.description} onChange={(e) => set('description', e.target.value)}
+              placeholder="A short line about the vibe — shown under the event title."
+              rows={2}
+              className="w-full border border-border text-text-primary text-[14px] px-4 py-[12px] rounded-[9px] outline-none resize-none mb-[18px]"
               style={field} />
             <div className="grid grid-cols-2 gap-[14px] mb-[18px]">
               <div>

@@ -28,6 +28,7 @@ export default function ManageEvent() {
   const { id } = useParams<{ id: string }>()
   const [event, setEvent] = useState<EventRow | null>(null)
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
@@ -89,6 +90,7 @@ export default function ManageEvent() {
     if (!ev) return
     setEvent(ev)
     setTitle(ev.title)
+    setDescription(ev.description ?? '')
     const t = toInputs(ev.starts_at)
     setDate(t.date)
     setStartTime(t.time)
@@ -111,7 +113,7 @@ export default function ManageEvent() {
 
   const orig = toInputs(event.starts_at)
   const origEnd = toInputs(event.ends_at)
-  const dirty = title !== event.title || date !== orig.date || startTime !== orig.time || endTime !== origEnd.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
+  const dirty = title !== event.title || description !== (event.description ?? '') || date !== orig.date || startTime !== orig.time || endTime !== origEnd.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
 
   async function handlePublish() {
     if (!id) return
@@ -140,7 +142,7 @@ export default function ManageEvent() {
     if (!id) return
     const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event!.starts_at
     const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
-    await updateEventDetails(id, { title, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
+    await updateEventDetails(id, { title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
     await reload(id)
@@ -315,7 +317,13 @@ export default function ManageEvent() {
           <div className="font-display font-bold text-base mb-[18px]">Edit details</div>
           <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Event name</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)}
-            className="w-full border border-border text-text-primary font-display font-semibold text-[17px] px-[15px] py-[13px] rounded-[9px] outline-none mb-4"
+            className="w-full border border-border text-text-primary font-display font-semibold text-[17px] px-[15px] py-[13px] rounded-[9px] outline-none mb-3"
+            style={field} />
+          <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Description <span className="font-normal text-text-muted">(optional)</span></label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="A short line about the vibe — shown under the event title."
+            rows={2}
+            className="w-full border border-border text-text-primary text-[14px] px-[15px] py-[12px] rounded-[9px] outline-none resize-none mb-4"
             style={field} />
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div>

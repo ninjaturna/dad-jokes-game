@@ -10,6 +10,7 @@ export async function getHostGuests(hostId: string): Promise<GuestRow[]> {
 
 export interface NewEventInput {
   title: string
+  description: string
   date: string        // yyyy-mm-dd
   time: string        // HH:mm
   timezone: string
@@ -47,6 +48,7 @@ export async function createEvent(hostId: string, input: NewEventInput, publish:
     host_id: hostId,
     slug,
     title: input.title.trim() || 'Untitled gathering',
+    description: input.description.trim() || null,
     starts_at,
     timezone: input.timezone,
     location_name: input.place.trim() || null,

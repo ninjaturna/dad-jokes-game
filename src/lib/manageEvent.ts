@@ -8,6 +8,7 @@ export async function getEventById(id: string): Promise<EventRow | null> {
 
 export async function updateEventDetails(id: string, fields: {
   title?: string
+  description?: string | null
   starts_at?: string | null
   location_name?: string | null
   visibility?: 'private' | 'unlisted' | 'public'
