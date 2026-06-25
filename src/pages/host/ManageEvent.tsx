@@ -29,7 +29,8 @@ export default function ManageEvent() {
   const [event, setEvent] = useState<EventRow | null>(null)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
-  const [time, setTime] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [place, setPlace] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'unlisted' | 'public'>('unlisted')
   const [notify, setNotify] = useState(true)
@@ -53,9 +54,35 @@ export default function ManageEvent() {
   const [hostedBy, setHostedBy] = useState('')
   const [imageUploading, setImageUploading] = useState(false)
   const imgInputRef = useRef<HTMLInputElement>(null)
+  const locationInputRef = useRef<HTMLInputElement>(null)
 
   const { user } = useAuth()
   useEffect(() => { if (user) getHostLocations(user.id).then(setLocationSuggestions) }, [user])
+
+  // Google Maps Places autocomplete on the location input
+  useEffect(() => {
+    const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
+    if (!key) return
+    function init() {
+      if (!locationInputRef.current) return
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ac = new (window as any).google.maps.places.Autocomplete(locationInputRef.current, {
+        types: ['establishment', 'geocode'],
+        fields: ['formatted_address', 'name'],
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ac.addListener('place_changed', () => { const p = ac.getPlace() as any; setPlace(p.name || p.formatted_address || '') })
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).google?.maps?.places) { init(); return }
+    if (document.getElementById('gm-places-script')) return
+    const s = document.createElement('script')
+    s.id = 'gm-places-script'
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`
+    s.async = true
+    s.onload = init
+    document.head.appendChild(s)
+  }, [])
 
   async function reload(eid: string) {
     const ev = await getEventById(eid)
@@ -64,7 +91,8 @@ export default function ManageEvent() {
     setTitle(ev.title)
     const t = toInputs(ev.starts_at)
     setDate(t.date)
-    setTime(t.time)
+    setStartTime(t.time)
+    setEndTime(toInputs(ev.ends_at).time)
     setPlace(ev.location_name ?? '')
     setVisibility(ev.visibility)
     setRsvpBy(ev.rsvp_by ?? '')
@@ -82,7 +110,8 @@ export default function ManageEvent() {
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   const orig = toInputs(event.starts_at)
-  const dirty = title !== event.title || date !== orig.date || time !== orig.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
+  const origEnd = toInputs(event.ends_at)
+  const dirty = title !== event.title || date !== orig.date || startTime !== orig.time || endTime !== origEnd.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
 
   async function handlePublish() {
     if (!id) return
@@ -109,8 +138,9 @@ export default function ManageEvent() {
 
   async function save() {
     if (!id) return
-    const starts_at = date && time ? new Date(`${date}T${time}`).toISOString() : event!.starts_at
-    await updateEventDetails(id, { title, starts_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
+    const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event!.starts_at
+    const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
+    await updateEventDetails(id, { title, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
     await reload(id)
@@ -287,24 +317,36 @@ export default function ManageEvent() {
           <input value={title} onChange={(e) => setTitle(e.target.value)}
             className="w-full border border-border text-text-primary font-display font-semibold text-[17px] px-[15px] py-[13px] rounded-[9px] outline-none mb-4"
             style={field} />
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 mb-3">
             <div>
               <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Date</label>
               <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} style={field} />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Time</label>
-              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputCls} style={field} />
+              <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Start time</label>
+              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className={inputCls} style={field} />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
-              <input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Venue name"
-                list="loc-suggestions" className={inputCls} style={field} />
-              {/* TODO: Places validation (needs VITE_GOOGLE_MAPS_KEY) */}
+              <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">End time</label>
+              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className={inputCls} style={field} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
+            <input
+              ref={locationInputRef}
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              placeholder={import.meta.env.VITE_GOOGLE_MAPS_KEY ? 'Search for a venue…' : 'Venue name'}
+              list={import.meta.env.VITE_GOOGLE_MAPS_KEY ? undefined : 'loc-suggestions'}
+              className={inputCls}
+              style={field}
+            />
+            {!import.meta.env.VITE_GOOGLE_MAPS_KEY && (
               <datalist id="loc-suggestions">
                 {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
               </datalist>
-            </div>
+            )}
           </div>
 
           <div className="mt-4">

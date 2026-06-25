@@ -12,6 +12,7 @@ export async function updateEventDetails(id: string, fields: {
   location_name?: string | null
   visibility?: 'private' | 'unlisted' | 'public'
   status?: 'draft' | 'published' | 'passed' | 'cancelled'
+  ends_at?: string | null
   allow_plus_ones?: boolean
   plus_one_max?: number
   audience?: 'all' | 'kid_friendly' | 'adults'
