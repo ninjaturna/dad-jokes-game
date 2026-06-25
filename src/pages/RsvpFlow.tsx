@@ -8,11 +8,11 @@ import { getEventBySlug, submitRsvp } from '../lib/events'
 import type { EventRow, RsvpResponse } from '../types/events'
 
 const DONE: Record<RsvpResponse, { title: string; body: (n: string) => string; ring: string }> = {
-  yes: { title: 'You’re in.', body: (n) => `See you in the yard${n ? `, ${n}` : ''}. We’ll text the details.`, ring: '#5DCAA5' },
-  maybe: { title: 'Noted.', body: (n) => `We’ll hold a maybe${n ? ` for ${n}` : ''} and nudge you closer to the day.`, ring: '#E0A867' },
-  no: { title: 'Next time.', body: (n) => `Thanks for letting us know${n ? `, ${n}` : ''}. We’ll catch you at the next one.`, ring: '#C98A4E' },
+  yes: { title: "You're in.", body: (n) => `See you in the yard${n ? `, ${n}` : ''}. We'll text the details.`, ring: '#5DCAA5' },
+  maybe: { title: 'Noted.', body: (n) => `We'll hold a maybe${n ? ` for ${n}` : ''} and nudge you closer to the day.`, ring: '#E0A867' },
+  no: { title: 'Next time.', body: (n) => `Thanks for letting us know${n ? `, ${n}` : ''}. We'll catch you at the next one.`, ring: '#C98A4E' },
 }
-const STEP2_TITLE: Record<RsvpResponse, string> = { yes: 'You’re coming!', maybe: 'Tentatively in', no: 'Sorry to miss you' }
+const STEP2_TITLE: Record<RsvpResponse, string> = { yes: "You're coming!", maybe: 'Tentatively in', no: 'Sorry to miss you' }
 const DOT: Record<RsvpResponse, string> = { yes: '#5DCAA5', maybe: '#E0A867', no: '#E0705F' }
 
 function fmtStrip(ev: EventRow): string {
@@ -41,24 +41,24 @@ export default function RsvpFlow() {
   if (!event) return (
     <div className="min-h-screen bg-bg-page text-text-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
       <Crest size={84} showWord={false} double={false} />
-      <p className="font-display text-2xl">This invitation isn’t available.</p>
+      <p className="font-display text-2xl">This invitation isn't available.</p>
       <Link to="/" className="text-accent-2 font-sans">Back to the Yard</Link>
     </div>
   )
 
-  const todayLocal = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,’0’)}-${String(n.getDate()).padStart(2,’0’)}` })()
+  const todayLocal = new Date().toLocaleDateString('en-CA')
   const rsvpClosed = !!event.rsvp_by && todayLocal > event.rsvp_by
 
   if (rsvpClosed) return (
     <div className="min-h-screen bg-bg-page text-text-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
       <Crest size={84} showWord={false} double={false} />
       <p className="font-display text-2xl">RSVPs are closed.</p>
-      <p className="text-[14px] m-0" style={{ color: ‘var(--text-muted)’ }}>The deadline for this event has passed.</p>
+      <p className="text-[14px] m-0" style={{ color: 'var(--text-muted)' }}>The deadline for this event has passed.</p>
       <Link to={`/e/${event.slug}`} className="text-accent-2 font-sans text-[13px]">View event page</Link>
     </div>
   )
 
-  const showPlus = rsvp !== ‘no’ && event.allow_plus_ones
+  const showPlus = rsvp !== 'no' && event.allow_plus_ones
   const accent = 'var(--accent)'
   const off = 'var(--border)'
 
@@ -110,7 +110,7 @@ export default function RsvpFlow() {
                     className="flex min-h-[44px] items-center gap-3.5 rounded-card border border-border px-5 py-[18px] text-left"
                     style={{ background: 'var(--field)' }}>
                     <span className="h-3 w-3 flex-none rounded-full" style={{ background: DOT[k] }} />
-                    <span className="whitespace-nowrap text-lg font-bold">{k === 'yes' ? 'Yes, I’m in' : k === 'maybe' ? 'Maybe' : 'Can’t make it'}</span>
+                    <span className="whitespace-nowrap text-lg font-bold">{k === 'yes' ? "Yes, I'm in" : k === 'maybe' ? 'Maybe' : "Can't make it"}</span>
                   </button>
                 ))}
               </div>
@@ -174,7 +174,7 @@ export default function RsvpFlow() {
         </div>
       </div>
 
-      <div className="relative z-[1] mt-[18px] text-xs tracking-[0.04em] text-text-muted">Black Cafe @ Marly’s Yard · Miami</div>
+      <div className="relative z-[1] mt-[18px] text-xs tracking-[0.04em] text-text-muted">Black Cafe @ Marly's Yard · Miami</div>
     </div>
   )
 }

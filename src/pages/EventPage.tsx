@@ -125,7 +125,7 @@ export default function EventPage() {
   if (!event) return (
     <div className="min-h-screen bg-bg-page text-text-primary flex flex-col items-center justify-center gap-4 px-6 text-center">
       <Crest size={84} showWord={false} double={false} />
-      <p className="font-display text-2xl">This invitation isn’t available.</p>
+      <p className="font-display text-2xl">This invitation isn't available.</p>
       <Link to="/" className="text-accent-2 font-sans">Back to the Yard</Link>
     </div>
   )
@@ -133,8 +133,7 @@ export default function EventPage() {
   const going = countGoing(rsvps)
   const seatsLeft = event.capacity != null ? Math.max(0, event.capacity - going) : null
 
-  // Compare local calendar date to rsvp_by (stored as YYYY-MM-DD)
-  const todayLocal = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}` })()
+  const todayLocal = new Date().toLocaleDateString('en-CA')
   const rsvpClosed = !!event.rsvp_by && todayLocal > event.rsvp_by
 
   function fmtRsvpBy(d: string) {
@@ -174,7 +173,7 @@ export default function EventPage() {
         <div className="mb-7 text-center">
           <div className="flex justify-center"><Crest size={76} showWord={false} double={false} ringWidth={1.25} /></div>
           <div className="mt-3.5 font-sans text-[11px] font-semibold tracking-[0.34em] text-text-muted">
-            YOU’RE INVITED · BLACK CAFE @ MARLY’S YARD
+            YOU'RE INVITED · BLACK CAFE @ MARLY'S YARD
           </div>
         </div>
 
@@ -252,7 +251,7 @@ export default function EventPage() {
           {sent ? (
             <div className="py-3 text-center">
               <div className="flex justify-center"><Crest size={84} showWord={false} double={false} ring="#5DCAA5" vine="#5DCAA5" leaf="#E0A867" /></div>
-              <h3 className="mb-1 mt-3 font-display text-3xl font-extrabold">You’re in.</h3>
+              <h3 className="mb-1 mt-3 font-display text-3xl font-extrabold">You're in.</h3>
               <p className="mb-5 text-text-secondary">See you in the yard{name.trim() ? `, ${name.trim()}` : ''}.</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button onClick={() => downloadICS(event)} className="rounded-control border border-text-muted px-4 py-2.5 text-sm font-semibold text-text-primary">Add to calendar</button>
@@ -277,7 +276,7 @@ export default function EventPage() {
                 {(['yes','maybe','no'] as RsvpResponse[]).map((k) => {
                   const c = { yes: '#5DCAA5', maybe: '#E0A867', no: '#E0705F' }[k]
                   const on = choice === k
-                  const label = k === 'yes' ? 'Yes' : k === 'maybe' ? 'Maybe' : 'Can’t'
+                  const label = k === 'yes' ? 'Yes' : k === 'maybe' ? 'Maybe' : "Can't"
                   return (
                     <button key={k} onClick={() => setChoice(k)} className="rounded-control py-4 text-[15px] font-semibold"
                       style={{ border: `1.5px solid ${on ? c : 'var(--border)'}`, background: on ? c : 'var(--field)', color: on ? '#260306' : 'var(--text-primary)' }}>
@@ -309,7 +308,7 @@ export default function EventPage() {
               </label>
               <button onClick={onSubmit} disabled={!choice || !name.trim() || submitting}
                 className="w-full rounded-control bg-accent py-4 text-base font-bold text-white disabled:opacity-60">
-                {submitting ? "Sending…" : choice ? "I’m in" : "Pick a response"}
+                {submitting ? "Sending…" : choice ? "I'm in" : "Pick a response"}
               </button>
             </div>
           )}
