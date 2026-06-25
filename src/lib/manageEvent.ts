@@ -77,6 +77,11 @@ export async function updatePotluckEnabled(eventId: string, enabled: boolean) {
   if (error) throw error
 }
 
+export async function deleteEvent(id: string): Promise<void> {
+  const { error } = await supabase.from('events').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function uploadEventImage(eventId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'png'
   const path = `${eventId}/${Date.now()}.${ext}`

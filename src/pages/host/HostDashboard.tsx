@@ -4,15 +4,24 @@ import Crest from '../../components/brand/Crest'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import { ensureProfile, loadHostDashboard, signOut, type HostDashboardData, type EventWithCounts } from '../../lib/host'
+import { deleteEvent } from '../../lib/manageEvent'
 
 const fmt = (iso: string | null, tz: string, opts: Intl.DateTimeFormatOptions) =>
   iso ? new Intl.DateTimeFormat('en-US', { timeZone: tz, ...opts }).format(new Date(iso)) : ''
 
-function EventRow({ ev }: { ev: EventWithCounts }) {
+function EventRow({ ev, onDelete }: { ev: EventWithCounts; onDelete: () => void }) {
+  const [confirming, setConfirming] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const tot = ev.going + ev.maybe + ev.declined || 1
   const pct = (n: number) => `${((n / tot) * 100).toFixed(1)}%`
   const seatsLeft = ev.capacity != null ? Math.max(0, ev.capacity - ev.going) : null
   const tag = seatsLeft != null ? `${seatsLeft} seats left` : 'Open'
+
+  async function handleDelete() {
+    setDeleting(true)
+    try { await deleteEvent(ev.id); onDelete() } catch { setDeleting(false); setConfirming(false) }
+  }
+
   return (
     <div className="flex items-center gap-5 bg-bg-surface border border-border rounded-card px-5 py-4" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex-none w-[62px] text-center border-r border-border pr-4">
@@ -34,9 +43,25 @@ function EventRow({ ev }: { ev: EventWithCounts }) {
           <span className="text-[12.5px] text-text-secondary tabular whitespace-nowrap">{ev.going} going · {ev.maybe} maybe · {ev.declined} declined</span>
         </div>
       </div>
-      <div className="flex-none flex gap-2">
-        <Link to={`/host/invites/${ev.id}`} className="border border-border text-text-primary text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap no-underline">Message</Link>
-        <Link to={`/host/event/${ev.id}`} className="border border-border text-text-secondary text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap no-underline">Edit</Link>
+      <div className="flex-none flex gap-2 items-center">
+        {confirming ? (
+          <>
+            <span className="text-[12.5px] text-text-muted whitespace-nowrap">Delete this event?</span>
+            <button onClick={handleDelete} disabled={deleting}
+              className="border border-[#C0392B] text-[#C0392B] text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap disabled:opacity-50">
+              {deleting ? 'Deleting…' : 'Yes, delete'}
+            </button>
+            <button onClick={() => setConfirming(false)} className="border border-border text-text-muted text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap">
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to={`/host/invites/${ev.id}`} className="border border-border text-text-primary text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap no-underline">Message</Link>
+            <Link to={`/host/event/${ev.id}`} className="border border-border text-text-secondary text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap no-underline">Edit</Link>
+            <button onClick={() => setConfirming(true)} className="border border-border text-text-muted text-sm font-semibold px-3.5 py-2 rounded-control whitespace-nowrap">Delete</button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -106,8 +131,9 @@ export default function HostDashboard() {
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          {data?.upcoming.length ? data.upcoming.map((ev) => <EventRow key={ev.id} ev={ev} />)
-            : <p className="text-text-secondary font-sans py-6">No upcoming gatherings yet. <Link to="/host/create" className="text-accent-2">Create one</Link>.</p>}
+          {data?.upcoming.length ? data.upcoming.map((ev) => (
+            <EventRow key={ev.id} ev={ev} onDelete={() => setData((d) => d ? { ...d, upcoming: d.upcoming.filter((e) => e.id !== ev.id) } : d)} />
+          )) : <p className="text-text-secondary font-sans py-6">No upcoming gatherings yet. <Link to="/host/create" className="text-accent-2">Create one</Link>.</p>}
         </div>
         {data?.passed.length ? (
           <>
