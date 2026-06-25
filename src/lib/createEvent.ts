@@ -11,10 +11,12 @@ export async function getHostGuests(hostId: string): Promise<GuestRow[]> {
 export interface NewEventInput {
   title: string
   description: string
-  date: string        // yyyy-mm-dd
-  time: string        // HH:mm
+  date: string              // yyyy-mm-dd
+  startTime: string         // HH:mm
+  endTime: string           // HH:mm
   timezone: string
   place: string
+  visibility: 'private' | 'unlisted' | 'public'
   tag: string
   allowPlusOnes: boolean
   plusMax: number
@@ -42,7 +44,8 @@ async function uniqueSlug(base: string): Promise<string> {
 }
 
 export async function createEvent(hostId: string, input: NewEventInput, publish: boolean): Promise<EventRow> {
-  const starts_at = input.date && input.time ? new Date(`${input.date}T${input.time}`).toISOString() : null
+  const starts_at = input.date && input.startTime ? new Date(`${input.date}T${input.startTime}`).toISOString() : null
+  const ends_at = input.date && input.endTime ? new Date(`${input.date}T${input.endTime}`).toISOString() : null
   const slug = await uniqueSlug(slugify(input.title))
   const { data: event, error } = await supabase.from('events').insert({
     host_id: hostId,
@@ -50,6 +53,7 @@ export async function createEvent(hostId: string, input: NewEventInput, publish:
     title: input.title.trim() || 'Untitled gathering',
     description: input.description.trim() || null,
     starts_at,
+    ends_at,
     timezone: input.timezone,
     location_name: input.place.trim() || null,
     tag: input.tag || null,
@@ -61,7 +65,7 @@ export async function createEvent(hostId: string, input: NewEventInput, publish:
     parking_note: input.parkingNote.trim() || null,
     links: input.links.filter((l) => l.label.trim() && l.url.trim()),
     potluck_enabled: input.polls.potluck,
-    visibility: 'unlisted',
+    visibility: input.visibility,
     status: publish ? 'published' : 'draft',
   }).select().single()
   if (error) throw error

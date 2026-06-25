@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import { getHostGuests, createEvent, type GuestRow, type NewEventInput } from '../../lib/createEvent'
 import { getHostLocations } from '../../lib/host'
+import { uploadEventImage } from '../../lib/manageEvent'
 
 const TAGS = [
   { id: 'Black Cafe', dot: '#D96B43' },
@@ -39,9 +40,13 @@ export default function CreateEvent() {
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [imgFile, setImgFile] = useState<File | null>(null)
+  const [imgPreview, setImgPreview] = useState('')
+  const imgInputRef = useRef<HTMLInputElement>(null)
 
   const [f, setF] = useState<NewEventInput>({
-    title: '', description: '', date: '', time: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
+    title: '', description: '', date: '', startTime: '', endTime: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
+    visibility: 'unlisted',
     tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'all',
     bringNote: '', wearNote: '', parkingNote: '',
     links: [{ label: '', url: '' }],
@@ -68,8 +73,8 @@ export default function CreateEvent() {
       const d = new Date(f.date + 'T00:00:00')
       parts.push(new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(d))
     }
-    if (f.time) {
-      const [h, m] = f.time.split(':').map(Number)
+    if (f.startTime) {
+      const [h, m] = f.startTime.split(':').map(Number)
       const d = new Date(); d.setHours(h, m, 0)
       parts.push(new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(d))
     }
@@ -91,8 +96,16 @@ export default function CreateEvent() {
     setSaving(true)
     try {
       const ev = await createEvent(user.id, f, publish)
+      if (imgFile) await uploadEventImage(ev.id, imgFile)
       navigate(publish ? `/e/${ev.slug}` : '/host')
     } finally { setSaving(false) }
+  }
+
+  function pickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImgFile(file)
+    setImgPreview(URL.createObjectURL(file))
   }
 
   const cat = TAGS.find((t) => t.id === f.tag) ?? TAGS[0]
@@ -165,23 +178,53 @@ export default function CreateEvent() {
               rows={2}
               className="w-full border border-border text-text-primary text-[14px] px-4 py-[12px] rounded-[9px] outline-none resize-none mb-[18px]"
               style={field} />
-            <div className="grid grid-cols-2 gap-[14px] mb-[18px]">
+            <div className="grid grid-cols-3 gap-[14px] mb-3">
               <div>
                 <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Date</label>
                 <input type="date" value={f.date} onChange={(e) => set('date', e.target.value)} className={inputCls} style={field} />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Time</label>
-                <input type="time" value={f.time} onChange={(e) => set('time', e.target.value)} className={inputCls} style={field} />
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Start time</label>
+                <input type="time" value={f.startTime} onChange={(e) => set('startTime', e.target.value)} className={inputCls} style={field} />
+              </div>
+              <div>
+                <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">End time</label>
+                <input type="time" value={f.endTime} onChange={(e) => set('endTime', e.target.value)} className={inputCls} style={field} />
               </div>
             </div>
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
             <input value={f.place} onChange={(e) => set('place', e.target.value)} placeholder="The Yard · Little Haiti, Miami"
-              list="loc-suggestions" className={inputCls} style={field} />
-            {/* TODO: Places validation (needs VITE_GOOGLE_MAPS_KEY) */}
+              list="loc-suggestions" className={`${inputCls} mb-[18px]`} style={field} />
             <datalist id="loc-suggestions">
               {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
             </datalist>
+            <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Visibility</label>
+            <select value={f.visibility} onChange={(e) => set('visibility', e.target.value as NewEventInput['visibility'])}
+              className={inputCls} style={field}>
+              <option value="unlisted">Unlisted — link only</option>
+              <option value="public">Public — shows on landing page</option>
+              <option value="private">Private — invite only</option>
+            </select>
+          </section>
+
+          {/* PHOTO */}
+          <section className="border border-border rounded-[14px] overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+            <div className="relative h-[160px] cursor-pointer" onClick={() => imgInputRef.current?.click()}
+              style={{ background: imgPreview ? `url(${imgPreview}) center/cover` : 'repeating-linear-gradient(135deg, var(--bg-surface-2), var(--bg-surface-2) 11px, color-mix(in srgb, var(--bg-surface-2) 70%, #000) 11px, color-mix(in srgb, var(--bg-surface-2) 70%, #000) 22px)' }}>
+              {!imgPreview && <div className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold tracking-[0.16em] text-text-muted">[ EVENT PHOTO ]</div>}
+            </div>
+            <div className="flex items-center justify-between px-5 py-4">
+              <div>
+                <div className="text-[13px] font-semibold text-text-primary">Event photo</div>
+                <div className="text-[12px] text-text-muted mt-0.5">PNG, WebP or GIF — shown on the invite page.</div>
+              </div>
+              <button onClick={() => imgInputRef.current?.click()}
+                className="text-[13px] font-semibold px-4 py-2 rounded-[8px] border border-border text-text-secondary whitespace-nowrap"
+                style={{ background: 'var(--accent-2)', color: '#fff', borderColor: 'transparent' }}>
+                {imgPreview ? 'Change photo' : 'Upload photo'}
+              </button>
+            </div>
+            <input ref={imgInputRef} type="file" accept="image/png,image/webp,image/gif" className="hidden" onChange={pickImage} />
           </section>
 
           {/* SERIES & TAGS */}
