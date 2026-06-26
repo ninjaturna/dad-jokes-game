@@ -168,6 +168,21 @@ export default function ManageEvent() {
     } finally { setAddingVenue(false) }
   }
 
+  const doAutoSave = useCallback(async () => {
+    if (!id || !event) return
+    setAutoSaveState('saving')
+    try {
+      const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event.starts_at
+      const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
+      const updates = { title: title || event.title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null }
+      await updateEventDetails(id, updates)
+      setEvent((e) => e ? { ...e, ...updates } : e)
+      setAutoSaveState('saved')
+      setTimeout(() => setAutoSaveState('idle'), 2000)
+    } catch { setAutoSaveState('idle') }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, event, title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy])
+
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   async function handlePublish() {
@@ -197,21 +212,6 @@ export default function ManageEvent() {
       setUploadError(err instanceof Error ? err.message : 'Upload failed — try a smaller file.')
     } finally { setImageUploading(false) }
   }
-
-  const doAutoSave = useCallback(async () => {
-    if (!id || !event) return
-    setAutoSaveState('saving')
-    try {
-      const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event.starts_at
-      const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
-      const updates = { title: title || event.title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null }
-      await updateEventDetails(id, updates)
-      setEvent((e) => e ? { ...e, ...updates } : e)
-      setAutoSaveState('saved')
-      setTimeout(() => setAutoSaveState('idle'), 2000)
-    } catch { setAutoSaveState('idle') }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, event, title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy])
 
   async function save() {
     if (!id) return
