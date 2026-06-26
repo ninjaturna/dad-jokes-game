@@ -64,6 +64,7 @@ export default function ManageEvent() {
   const [uploadError, setUploadError] = useState('')
   const imgInputRef = useRef<HTMLInputElement>(null)
   const locationInputRef = useRef<HTMLInputElement>(null)
+  const addressInputRef = useRef<HTMLInputElement>(null)
   const [venues, setVenues] = useState<Venue[]>([])
   const [venueId, setVenueId] = useState('__custom__')
   const [showAddVenue, setShowAddVenue] = useState(false)
@@ -80,30 +81,48 @@ export default function ManageEvent() {
     getVenues(user.id).then(setVenues)
   }, [user])
 
-  // Google Maps Places autocomplete on the location input
+  // Google Maps Places autocomplete — validates addresses for one-time/custom
+  // locations. Attaches to the venue-name and street-address inputs; re-runs
+  // when those inputs mount (venue selection / add-venue toggling).
   useEffect(() => {
     const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
     if (!key) return
-    function init() {
-      if (!locationInputRef.current) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function attach(el: HTMLInputElement | null, onPick: (p: any) => void) {
+      if (!el || el.dataset.gmReady) return
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ac = new (window as any).google.maps.places.Autocomplete(locationInputRef.current, {
+      const ac = new (window as any).google.maps.places.Autocomplete(el, {
         types: ['establishment', 'geocode'],
-        fields: ['formatted_address', 'name'],
+        fields: ['formatted_address', 'name', 'url'],
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ac.addListener('place_changed', () => { const p = ac.getPlace() as any; setPlace(p.name || p.formatted_address || '') })
+      ac.addListener('place_changed', () => onPick(ac.getPlace()))
+      el.dataset.gmReady = '1'
+    }
+    function init() {
+      // Picking from the name field fills both the name and a validated address.
+      attach(locationInputRef.current, (p) => {
+        if (p.name) setPlace(p.name)
+        else if (p.formatted_address) setPlace(p.formatted_address)
+        if (p.formatted_address) setLocationAddress(p.formatted_address)
+      })
+      // Picking from the address field fills the validated street address.
+      attach(addressInputRef.current, (p) => {
+        if (p.formatted_address) setLocationAddress(p.formatted_address)
+      })
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).google?.maps?.places) { init(); return }
-    if (document.getElementById('gm-places-script')) return
+    if (document.getElementById('gm-places-script')) {
+      document.getElementById('gm-places-script')!.addEventListener('load', init)
+      return
+    }
     const s = document.createElement('script')
     s.id = 'gm-places-script'
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`
     s.async = true
     s.onload = init
     document.head.appendChild(s)
-  }, [])
+  }, [venueId, showAddVenue])
 
   async function reload(eid: string) {
     const ev = await getEventById(eid)
@@ -477,7 +496,7 @@ export default function ManageEvent() {
                 placeholder="Venue name" className={`${inputCls} mb-2`} style={field} />
             )}
             {!showAddVenue && (
-              <input value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)}
+              <input ref={addressInputRef} value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)}
                 placeholder="Street address (shown on the invite)" className={inputCls} style={field} />
             )}
             {showAddVenue && (
