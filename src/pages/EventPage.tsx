@@ -173,7 +173,7 @@ export default function EventPage() {
         <div className="mb-7 text-center">
           <div className="flex justify-center"><Crest size={76} showWord={false} double={false} ringWidth={1.25} /></div>
           <div className="mt-3.5 font-sans text-[11px] font-semibold tracking-[0.34em] text-text-muted">
-            YOU'RE INVITED · BLACK CAFE @ MARLY'S YARD
+            YOU'RE INVITED · BLACK CAFE{event.location_name ? ` @ ${event.location_name.toUpperCase()}` : ''}
           </div>
         </div>
 
