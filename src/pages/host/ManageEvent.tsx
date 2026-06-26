@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { downloadICS, googleCalUrl } from '../../lib/ics'
@@ -39,6 +39,9 @@ export default function ManageEvent() {
   const [savedFlash, setSavedFlash] = useState(false)
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const formRef = useRef({ title: '', description: '', date: '', startTime: '', endTime: '', place: '', visibility: 'unlisted' as 'private' | 'unlisted' | 'public', rsvpBy: '', allowPlusOnes: true, plusMax: 1, audience: 'adults' as 'all' | 'kid_friendly' | 'adults', hostedBy: '' })
+  const dirtyRef = useRef(false)
+  const eventRef = useRef<EventRow | null>(null)
   const [goingN, setGoingN] = useState(0)
   const [poll, setPoll] = useState<DatePoll | null>(null)
   const [newOption, setNewOption] = useState('')
@@ -132,15 +135,24 @@ export default function ManageEvent() {
     audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
   )
 
-  // Auto-save: 2s debounce after any field change while dirty
+  // Keep refs current every render (safe to assign in render body)
+  formRef.current = { title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy }
+  dirtyRef.current = dirty
+  eventRef.current = event
+
+  // Auto-save: 800ms debounce after any field change while dirty
   useEffect(() => {
     if (!dirty || !id || !event) return
     setAutoSaveState('pending')
     clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(() => { void doAutoSave() }, 2000)
+    autoSaveTimer.current = setTimeout(() => { void doSave() }, 800)
     return () => clearTimeout(autoSaveTimer.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy, dirty])
+
+  // Save on unmount if there are unsaved changes (prevents data loss on navigation)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => { if (dirtyRef.current) void doSave() }, [])
 
   // Sync venueId when event and venues are both loaded
   useEffect(() => {
@@ -168,20 +180,21 @@ export default function ManageEvent() {
     } finally { setAddingVenue(false) }
   }
 
-  const doAutoSave = useCallback(async () => {
-    if (!id || !event) return
+  async function doSave() {
+    const ev = eventRef.current
+    if (!id || !ev) return
+    const f = formRef.current
     setAutoSaveState('saving')
     try {
-      const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event.starts_at
-      const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
-      const updates = { title: title || event.title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null }
+      const starts_at = f.date && f.startTime ? new Date(`${f.date}T${f.startTime}`).toISOString() : ev.starts_at
+      const ends_at = f.date && f.endTime ? new Date(`${f.date}T${f.endTime}`).toISOString() : null
+      const updates = { title: f.title || ev.title, description: f.description.trim() || null, starts_at, ends_at, location_name: f.place || null, visibility: f.visibility, rsvp_by: f.rsvpBy || null, allow_plus_ones: f.allowPlusOnes, plus_one_max: f.plusMax, audience: f.audience, hosted_by: f.hostedBy || null }
       await updateEventDetails(id, updates)
       setEvent((e) => e ? { ...e, ...updates } : e)
       setAutoSaveState('saved')
       setTimeout(() => setAutoSaveState('idle'), 2000)
     } catch { setAutoSaveState('idle') }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, event, title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy])
+  }
 
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
@@ -216,7 +229,7 @@ export default function ManageEvent() {
   async function save() {
     if (!id) return
     clearTimeout(autoSaveTimer.current)
-    await doAutoSave()
+    await doSave()
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
   }
