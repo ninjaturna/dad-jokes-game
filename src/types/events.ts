@@ -6,6 +6,7 @@ export interface EventRow {
   title: string
   description: string | null
   host_note: string | null
+  invite_note: string | null
   starts_at: string | null
   ends_at: string | null
   timezone: string

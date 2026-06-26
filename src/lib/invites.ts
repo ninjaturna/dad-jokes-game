@@ -9,6 +9,12 @@ export async function getEvent(eventId: string): Promise<EventRow | null> {
 
 export { getLists }
 
+// Persist the invite note on the event so it survives reloads.
+export async function saveInviteNote(eventId: string, note: string): Promise<void> {
+  const { error } = await supabase.from('events').update({ invite_note: note }).eq('id', eventId)
+  if (error) throw error
+}
+
 export interface SendResult { configured: boolean; delivered: number }
 
 export async function sendEmailInvites(input: {

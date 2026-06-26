@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import Crest from '../../components/brand/Crest'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
-import { getEvent, getLists, sendEmailInvites, sendSmsInvites } from '../../lib/invites'
+import { getEvent, getLists, sendEmailInvites, sendSmsInvites, saveInviteNote } from '../../lib/invites'
 import type { EventRow } from '../../types/events'
 import type { ListWithMembers } from '../../lib/guests'
 
@@ -48,16 +48,29 @@ export default function SendInvites() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [channel, setChannel] = useState<'email' | 'sms'>('email')
   const [templateId, setTemplateId] = useState('candlelit')
-  const [note, setNote] = useState("Pull up a chair — slow dinner under the vines. Doors at eight, we eat at nine.")
+  const DEFAULT_NOTE = "Pull up a chair — slow dinner under the vines. Doors at eight, we eat at nine."
+  const [note, setNote] = useState(DEFAULT_NOTE)
+  const [savedNote, setSavedNote] = useState(DEFAULT_NOTE)
+  const [noteSaving, setNoteSaving] = useState(false)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ configured: boolean; delivered: number } | null>(null)
   const [sentChannel, setSentChannel] = useState<'email' | 'sms'>('email')
 
   useEffect(() => {
     if (!eventId || !user) return
-    getEvent(eventId).then(setEvent)
+    getEvent(eventId).then((ev) => {
+      setEvent(ev)
+      if (ev?.invite_note) { setNote(ev.invite_note); setSavedNote(ev.invite_note) }
+    })
     getLists(user.id).then((ls) => { setLists(ls); setSelected(new Set(ls.map((l) => l.id))) })
   }, [eventId, user])
+
+  async function handleSaveNote() {
+    if (!eventId) return
+    setNoteSaving(true)
+    try { await saveInviteNote(eventId, note); setSavedNote(note) }
+    finally { setNoteSaving(false) }
+  }
 
   const drawQR = useCallback(() => {
     if (!event || !canvasRef.current) return
@@ -213,11 +226,20 @@ export default function SendInvites() {
 
           {/* Note */}
           <section className="border border-border rounded-[14px] p-[22px]" style={{ background: 'var(--bg-surface)' }}>
-            <div className="font-display font-bold text-base mb-[14px]">Your note</div>
+            <div className="flex items-center justify-between mb-[14px]">
+              <div className="font-display font-bold text-base">Your note</div>
+              <button onClick={handleSaveNote} disabled={noteSaving || note === savedNote}
+                className="font-sans text-[12.5px] font-semibold px-3.5 py-[7px] rounded-[8px] cursor-pointer disabled:opacity-40"
+                style={{ border: '1px solid var(--accent-2)', background: 'transparent', color: 'var(--accent-2)' }}>
+                {noteSaving ? 'Saving…' : note === savedNote ? 'Saved' : 'Save note'}
+              </button>
+            </div>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3}
               className="w-full rounded-[10px] border border-border text-text-primary font-sans text-[15px] leading-[1.55] px-4 py-3.5 outline-none resize-none"
               style={fld} />
-            <div className="mt-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>{note.length} characters</div>
+            <div className="mt-2 text-[12px]" style={{ color: 'var(--text-muted)' }}>
+              {note.length} characters{note !== savedNote ? ' · unsaved changes' : ''}
+            </div>
           </section>
         </div>
 
