@@ -96,6 +96,7 @@ export default function HostDashboard() {
         </div>
         <span className="flex items-center gap-3 px-3 py-2.5 rounded-control text-sm font-semibold" style={{ background: 'var(--bg-surface-2)' }}><span className="w-[7px] h-[7px] rounded-[2px] bg-accent" />Gatherings</span>
         <Link to="/host/guests" className="flex items-center gap-3 px-3 py-2.5 rounded-control text-sm text-text-secondary no-underline"><span className="w-[7px] h-[7px] rounded-[2px] border border-border" />Guests</Link>
+        <Link to="/host/venues" className="flex items-center gap-3 px-3 py-2.5 rounded-control text-sm text-text-secondary no-underline"><span className="w-[7px] h-[7px] rounded-[2px] border border-border" />Venues</Link>
         <span className="flex items-center gap-3 px-3 py-2.5 rounded-control text-sm text-text-secondary"><span className="w-[7px] h-[7px] rounded-[2px] border border-border" />Messages</span>
         <span className="flex items-center gap-3 px-3 py-2.5 rounded-control text-sm text-text-secondary"><span className="w-[7px] h-[7px] rounded-[2px] border border-border" />The list</span>
         <div className="mt-auto flex flex-col gap-2.5">

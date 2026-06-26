@@ -79,4 +79,14 @@ export async function createVenue(hostId: string, name: string, address?: string
   return data as Venue
 }
 
+export async function updateVenue(id: string, name: string, address?: string): Promise<void> {
+  const { error } = await supabase.from('venues').update({ name: name.trim(), address: address?.trim() || null }).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteVenue(id: string): Promise<void> {
+  const { error } = await supabase.from('venues').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function signOut() { await supabase.auth.signOut() }

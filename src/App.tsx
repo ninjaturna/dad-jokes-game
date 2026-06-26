@@ -15,6 +15,7 @@ import HostDashboard from './pages/host/HostDashboard'
 import CreateEvent from './pages/host/CreateEvent'
 import ManageEvent from './pages/host/ManageEvent'
 import Guests from './pages/host/Guests'
+import Venues from './pages/host/Venues'
 import SendInvites from './pages/host/SendInvites'
 import InfoPages from './pages/host/InfoPages'
 import Landing from './pages/Landing'
@@ -73,6 +74,7 @@ function App() {
         <Route path="/host/event/:id" element={<RequireAuth><ManageEvent /></RequireAuth>} />
         <Route path="/host/event/:eventId/info" element={<RequireAuth><InfoPages /></RequireAuth>} />
         <Route path="/host/guests" element={<RequireAuth><Guests /></RequireAuth>} />
+        <Route path="/host/venues" element={<RequireAuth><Venues /></RequireAuth>} />
         <Route path="/host/invites/:eventId" element={<RequireAuth><SendInvites /></RequireAuth>} />
         <Route path={GAME_BASE} element={<LandingPage />} />
         <Route path={`${GAME_BASE}/play`} element={<Home />} />
