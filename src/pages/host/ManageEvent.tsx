@@ -10,9 +10,10 @@ import {
   type DatePoll, type Slot,
 } from '../../lib/manageEvent'
 import { sendReminder } from '../../lib/invites'
+import { getRsvps } from '../../lib/events'
 import { useAuth } from '../../hooks/useAuth'
 import { getHostLocations, getVenues, createVenue, type Venue } from '../../lib/host'
-import type { EventRow } from '../../types/events'
+import type { EventRow, RsvpRow } from '../../types/events'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -45,6 +46,7 @@ export default function ManageEvent() {
   const dirtyRef = useRef(false)
   const eventRef = useRef<EventRow | null>(null)
   const [goingN, setGoingN] = useState(0)
+  const [rsvps, setRsvps] = useState<RsvpRow[]>([])
   const [poll, setPoll] = useState<DatePoll | null>(null)
   const [newOption, setNewOption] = useState('')
   const [addingOption, setAddingOption] = useState(false)
@@ -73,6 +75,7 @@ export default function ManageEvent() {
   const [addingVenue, setAddingVenue] = useState(false)
   const [reminderState, setReminderState] = useState<'idle' | 'sending'>('idle')
   const [reminderResult, setReminderResult] = useState<{ configured: boolean; delivered: number } | null>(null)
+  const [rosterCopied, setRosterCopied] = useState(false)
 
   const { user } = useAuth()
   useEffect(() => {
@@ -143,6 +146,7 @@ export default function ManageEvent() {
     setAudience(ev.audience)
     setHostedBy(ev.hosted_by ?? '')
     setGoingN(await confirmedCount(eid))
+    setRsvps(await getRsvps(eid))
     setPoll(await getDatePoll(eid))
     setSlots(await getPotluckSlots(eid))
   }
@@ -246,6 +250,52 @@ export default function ManageEvent() {
     setPublishSaving(true)
     try { await updateEventDetails(id, { status: 'draft' }); await reload(id) }
     finally { setPublishSaving(false) }
+  }
+
+  // RSVP roster: group by response, with head counts (each guest + their plus-ones + kids).
+  const headCount = (r: RsvpRow) => 1 + (r.plus_ones || 0) + (r.kids || 0)
+  const byResponse = (resp: RsvpRow['response']) => rsvps.filter((r) => r.response === resp)
+  const groups = [
+    { key: 'yes' as const, label: 'Going', color: '#5DCAA5' },
+    { key: 'maybe' as const, label: 'Maybe', color: '#E0A867' },
+    { key: 'no' as const, label: "Can't", color: '#E0705F' },
+  ]
+
+  function rosterRows() {
+    return rsvps.map((r) => ({
+      name: r.name,
+      response: r.response === 'yes' ? 'Going' : r.response === 'maybe' ? 'Maybe' : "Can't",
+      plusOnes: r.plus_ones || 0,
+      kids: r.kids || 0,
+      email: r.email ?? '',
+      responded: new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    }))
+  }
+
+  async function copyRoster() {
+    const lines = groups.flatMap((g) => {
+      const list = byResponse(g.key)
+      if (!list.length) return []
+      return [`${g.label} (${list.reduce((n, r) => n + headCount(r), 0)}):`,
+        ...list.map((r) => `  • ${r.name}${r.plus_ones ? ` +${r.plus_ones}` : ''}${r.kids ? ` (${r.kids} kid${r.kids > 1 ? 's' : ''})` : ''}`), '']
+    })
+    await navigator.clipboard.writeText(lines.join('\n').trim())
+    setRosterCopied(true)
+    setTimeout(() => setRosterCopied(false), 2000)
+  }
+
+  function downloadRosterCSV() {
+    if (!event) return
+    const header = ['Name', 'Response', 'Plus-ones', 'Kids', 'Email', 'Responded']
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+    const rows = rosterRows().map((r) => [r.name, r.response, r.plusOnes, r.kids, r.email, r.responded].map(esc).join(','))
+    const blob = new Blob([[header.join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${event.slug}-rsvps.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -406,6 +456,66 @@ export default function ManageEvent() {
                 {publishSaving ? 'Updating…' : 'Unpublish'}
               </button>
             </div>
+          )}
+        </section>
+
+        {/* WHO'S COMING (RSVP roster) */}
+        <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex items-center justify-between gap-4 flex-wrap mb-1.5">
+            <div className="font-display font-bold text-base">Who's coming</div>
+            {rsvps.length > 0 && (
+              <div className="flex gap-2.5">
+                <button onClick={copyRoster}
+                  className="border border-border text-text-secondary font-sans text-[12.5px] font-semibold px-3.5 py-[7px] rounded-[8px] cursor-pointer"
+                  style={{ background: 'transparent' }}>
+                  {rosterCopied ? 'Copied ✓' : 'Copy list'}
+                </button>
+                <button onClick={downloadRosterCSV}
+                  className="border border-border text-text-secondary font-sans text-[12.5px] font-semibold px-3.5 py-[7px] rounded-[8px] cursor-pointer"
+                  style={{ background: 'transparent' }}>
+                  Export CSV
+                </button>
+              </div>
+            )}
+          </div>
+          {rsvps.length === 0 ? (
+            <p className="text-[13px] m-0" style={{ color: 'var(--text-muted)' }}>
+              No RSVPs yet. Responses show up here as guests reply.
+            </p>
+          ) : (
+            <>
+              <p className="text-[13px] m-0 mb-4" style={{ color: 'var(--text-muted)' }}>
+                {goingN} confirmed · {rsvps.reduce((n, r) => r.response === 'yes' ? n + headCount(r) : n, 0)} total head count (incl. plus-ones)
+              </p>
+              <div className="flex flex-col gap-4">
+                {groups.map((g) => {
+                  const list = byResponse(g.key)
+                  if (!list.length) return null
+                  const heads = list.reduce((n, r) => n + headCount(r), 0)
+                  return (
+                    <div key={g.key}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-[9px] h-[9px] rounded-full flex-none" style={{ background: g.color }} />
+                        <span className="font-sans text-[12px] font-semibold tracking-[0.1em] uppercase" style={{ color: 'var(--text-secondary)' }}>
+                          {g.label}
+                        </span>
+                        <span className="text-[12px] tabular" style={{ color: 'var(--text-muted)' }}>· {list.length} ({heads})</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5 pl-[17px]">
+                        {list.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between gap-3 text-[14px]">
+                            <span className="text-text-primary">{r.name}</span>
+                            <span className="text-[12.5px] tabular" style={{ color: 'var(--text-muted)' }}>
+                              {r.plus_ones ? `+${r.plus_ones}` : ''}{r.kids ? `${r.plus_ones ? ' · ' : ''}${r.kids} kid${r.kids > 1 ? 's' : ''}` : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </section>
 
