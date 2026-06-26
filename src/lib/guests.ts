@@ -9,9 +9,10 @@ export async function getContacts(hostId: string): Promise<Contact[]> {
   return (data as Contact[]) ?? []
 }
 
-export async function addContact(hostId: string, c: { name: string; email?: string; phone?: string; smsConsent?: boolean }) {
-  const { error } = await supabase.from('guests').insert({ host_id: hostId, name: c.name.trim(), email: c.email?.trim() || null, phone: c.phone?.trim() || null, sms_consent: c.smsConsent ?? false })
+export async function addContact(hostId: string, c: { name: string; email?: string; phone?: string; smsConsent?: boolean }): Promise<string> {
+  const { data, error } = await supabase.from('guests').insert({ host_id: hostId, name: c.name.trim(), email: c.email?.trim() || null, phone: c.phone?.trim() || null, sms_consent: c.smsConsent ?? false }).select('id').single()
   if (error) throw error
+  return data.id as string
 }
 
 export async function getLists(hostId: string): Promise<ListWithMembers[]> {
@@ -61,5 +62,11 @@ export async function updateContact(id: string, fields: { name: string; email?: 
 
 export async function deleteContact(id: string) {
   const { error } = await supabase.from('guests').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteList(listId: string) {
+  await supabase.from('list_members').delete().eq('list_id', listId)
+  const { error } = await supabase.from('lists').delete().eq('id', listId)
   if (error) throw error
 }

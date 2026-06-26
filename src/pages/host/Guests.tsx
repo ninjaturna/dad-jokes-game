@@ -4,7 +4,7 @@ import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import {
   getContacts, addContact, getLists, createList, updateList, toggleListMember,
-  getPendingRsvps, setRsvpStatus, updateContact, deleteContact,
+  getPendingRsvps, setRsvpStatus, updateContact, deleteContact, deleteList,
   type Contact, type ListWithMembers, type PendingRsvp,
 } from '../../lib/guests'
 
@@ -49,7 +49,10 @@ export default function Guests() {
   const [newEmail, setNewEmail] = useState('')
   const [newPhone, setNewPhone] = useState('')
   const [newSmsConsent, setNewSmsConsent] = useState(false)
+  const [newListIds, setNewListIds] = useState<string[]>([])
   const [addingContact, setAddingContact] = useState(false)
+  const [confirmDeleteListId, setConfirmDeleteListId] = useState<string | null>(null)
+  const [deletingListId, setDeletingListId] = useState<string | null>(null)
   const [editListId, setEditListId] = useState<string | null>(null)
   const [editListName, setEditListName] = useState('')
   const [importStatus, setImportStatus] = useState<string | null>(null)
@@ -78,8 +81,11 @@ export default function Guests() {
     if (!user || !newName.trim()) return
     setAddingContact(true)
     try {
-      await addContact(user.id, { name: newName, email: newEmail || undefined, phone: newPhone || undefined, smsConsent: newSmsConsent })
-      setNewName(''); setNewEmail(''); setNewPhone(''); setNewSmsConsent(false); setShowAddForm(false)
+      const contactId = await addContact(user.id, { name: newName, email: newEmail || undefined, phone: newPhone || undefined, smsConsent: newSmsConsent })
+      if (newListIds.length) {
+        await Promise.all(newListIds.map((lid) => toggleListMember(lid, contactId, false)))
+      }
+      setNewName(''); setNewEmail(''); setNewPhone(''); setNewSmsConsent(false); setNewListIds([]); setShowAddForm(false)
       await reload()
     } finally { setAddingContact(false) }
   }
@@ -89,6 +95,15 @@ export default function Guests() {
     const id = await createList(user.id, 'New list')
     await reload()
     setAddListId(id)
+  }
+
+  async function handleDeleteList(listId: string) {
+    setDeletingListId(listId)
+    try {
+      await deleteList(listId)
+      setConfirmDeleteListId(null)
+      setLists((prev) => prev.filter((l) => l.id !== listId))
+    } finally { setDeletingListId(null) }
   }
 
   async function handleToggleMember(guestId: string, isMember: boolean) {
@@ -263,6 +278,29 @@ export default function Guests() {
                 I have their permission to text them about gatherings
               </span>
             </label>
+            {lists.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[12px] font-semibold text-text-secondary mb-2">Add to list</div>
+                <div className="flex flex-wrap gap-2">
+                  {lists.map((l, i) => {
+                    const checked = newListIds.includes(l.id)
+                    return (
+                      <button key={l.id} type="button"
+                        onClick={() => setNewListIds((prev) => checked ? prev.filter((id) => id !== l.id) : [...prev, l.id])}
+                        className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3 py-1.5 rounded-pill cursor-pointer"
+                        style={{
+                          border: `1px solid ${checked ? LIST_COLORS[i % LIST_COLORS.length] : 'var(--border)'}`,
+                          background: checked ? `color-mix(in srgb,${LIST_COLORS[i % LIST_COLORS.length]} 18%, transparent)` : 'transparent',
+                          color: checked ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        }}>
+                        <span className="w-2 h-2 rounded-full flex-none" style={{ background: LIST_COLORS[i % LIST_COLORS.length] }} />
+                        {l.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <div className="flex justify-end gap-2.5">
               <button onClick={() => setShowAddForm(false)}
                 className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2.5 rounded-[8px] cursor-pointer"
@@ -346,18 +384,40 @@ export default function Guests() {
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Link to="/host"
-                      className="flex-1 text-center text-white font-sans text-[13px] font-bold py-[10px] rounded-[8px] no-underline"
-                      style={{ background: 'var(--accent)' }}>
-                      Invite this list
-                    </Link>
-                    <button onClick={() => setAddListId(l.id)}
-                      className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-[14px] py-[10px] rounded-[8px] cursor-pointer whitespace-nowrap"
-                      style={{ background: 'transparent' }}>
-                      + Add
-                    </button>
-                  </div>
+                  {confirmDeleteListId === l.id ? (
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>Delete this list?</span>
+                      <button onClick={() => handleDeleteList(l.id)} disabled={deletingListId === l.id}
+                        className="font-sans text-[12.5px] font-bold px-3 py-[8px] rounded-[7px] cursor-pointer disabled:opacity-50 text-white whitespace-nowrap"
+                        style={{ background: '#A62F24', border: 'none' }}>
+                        {deletingListId === l.id ? 'Deleting…' : 'Yes, delete'}
+                      </button>
+                      <button onClick={() => setConfirmDeleteListId(null)}
+                        className="border border-border font-sans text-[12.5px] font-semibold px-3 py-[8px] rounded-[7px] cursor-pointer whitespace-nowrap"
+                        style={{ background: 'transparent', color: 'var(--text-secondary)' }}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Link to="/host"
+                        className="flex-1 text-center text-white font-sans text-[13px] font-bold py-[10px] rounded-[8px] no-underline"
+                        style={{ background: 'var(--accent)' }}>
+                        Invite this list
+                      </Link>
+                      <button onClick={() => setAddListId(l.id)}
+                        className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-[14px] py-[10px] rounded-[8px] cursor-pointer whitespace-nowrap"
+                        style={{ background: 'transparent' }}>
+                        + Add
+                      </button>
+                      <button onClick={() => setConfirmDeleteListId(l.id)}
+                        className="border border-border font-sans text-[13px] font-semibold px-[10px] py-[10px] rounded-[8px] cursor-pointer"
+                        style={{ background: 'transparent', color: 'var(--text-muted)' }}
+                        title="Delete list">
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
