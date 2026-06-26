@@ -79,7 +79,7 @@ export default function CreateEvent() {
       parts.push(new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(d))
     }
     return parts.length ? parts.join(' · ') : 'Date & time'
-  }, [f.date, f.time])
+  }, [f.date, f.startTime])
 
   function toggleGuest(id: string) {
     setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
