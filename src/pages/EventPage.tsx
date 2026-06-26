@@ -236,6 +236,41 @@ export default function EventPage() {
           </div>
         )}
 
+        {/* bring / wear */}
+        {(event.bring_note || event.wear_note) && (
+          <div className="mt-7 grid grid-cols-2 gap-3.5">
+            {event.bring_note && (
+              <div className="rounded-card border border-border px-5 py-[18px]">
+                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">BRING</div>
+                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.bring_note}</div>
+              </div>
+            )}
+            {event.wear_note && (
+              <div className="rounded-card border border-border px-5 py-[18px]">
+                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">WEAR</div>
+                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.wear_note}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* info pages (menu, itinerary, etc.) — all content sits above the RSVP */}
+        {infoPages.filter((p) => p.body.items.some((it) => it.a || it.b)).map((page) => {
+          const rendered = renderInfoItems(page)
+          if (!rendered) return null
+          return (
+            <div key={page.id} className="mt-7">
+              <div className="mb-[6px] font-sans text-[11px] font-semibold tracking-[.2em]" style={{ color: 'var(--text-muted)' }}>
+                {INFO_TYPES[page.type].name.toUpperCase()}
+              </div>
+              <h2 className="m-0 mb-5 font-display font-extrabold text-[24px] tracking-[-0.01em]">{page.title}</h2>
+              <div className="rounded-card border border-border p-5" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
+                {rendered}
+              </div>
+            </div>
+          )
+        })}
+
         {/* RSVP deadline notice */}
         {event.rsvp_by && !sent && (
           <div className="mb-3 flex items-center gap-2" style={{ color: rsvpClosed ? 'var(--text-muted)' : 'var(--candle)' }}>
@@ -246,8 +281,8 @@ export default function EventPage() {
           </div>
         )}
 
-        {/* RSVP MODULE */}
-        <div className="rounded-card border border-border bg-bg-surface p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
+        {/* RSVP MODULE — last interactive block, after all event content */}
+        <div className="mt-7 rounded-card border border-border bg-bg-surface p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
           {sent ? (
             <div className="py-3 text-center">
               <div className="flex justify-center"><Crest size={84} showWord={false} double={false} ring="#5DCAA5" vine="#5DCAA5" leaf="#E0A867" /></div>
@@ -340,41 +375,6 @@ export default function EventPage() {
             </div>
           )
         })()}
-
-        {/* bring / wear */}
-        {(event.bring_note || event.wear_note) && (
-          <div className="mt-7 grid grid-cols-2 gap-3.5">
-            {event.bring_note && (
-              <div className="rounded-card border border-border px-5 py-[18px]">
-                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">BRING</div>
-                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.bring_note}</div>
-              </div>
-            )}
-            {event.wear_note && (
-              <div className="rounded-card border border-border px-5 py-[18px]">
-                <div className="mb-1.5 font-sans text-[11px] font-semibold tracking-[0.16em] text-text-muted">WEAR</div>
-                <div className="text-[14.5px] leading-[1.5] text-text-primary">{event.wear_note}</div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* info pages */}
-        {infoPages.filter((p) => p.body.items.some((it) => it.a || it.b)).map((page) => {
-          const rendered = renderInfoItems(page)
-          if (!rendered) return null
-          return (
-            <div key={page.id} className="mt-7">
-              <div className="mb-[6px] font-sans text-[11px] font-semibold tracking-[.2em]" style={{ color: 'var(--text-muted)' }}>
-                {INFO_TYPES[page.type].name.toUpperCase()}
-              </div>
-              <h2 className="m-0 mb-5 font-display font-extrabold text-[24px] tracking-[-0.01em]">{page.title}</h2>
-              <div className="rounded-card border border-border p-5" style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
-                {rendered}
-              </div>
-            </div>
-          )
-        })}
 
         {/* footer actions */}
         <div className="mt-7 flex justify-center gap-4">

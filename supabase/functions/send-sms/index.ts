@@ -34,7 +34,7 @@ serve(async (req) => {
     )
 
     const { data: event } = await supabase
-      .from('events').select('title,slug').eq('id', eventId).single()
+      .from('events').select('title,slug,location_name').eq('id', eventId).single()
 
     const { data: members } = await supabase
       .from('list_members').select('guests(phone,name,sms_consent)').in('list_id', listIds)
@@ -53,13 +53,14 @@ serve(async (req) => {
 
     const origin = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://blackcafe.miami'
     const link = `${origin}/e/${event.slug}`
+    const from = `Black Cafe${event.location_name ? ` @ ${event.location_name}` : ''}`
     let delivered = 0
 
     for (const r of recipients) {
       const body = new URLSearchParams({
         To: r.phone,
         MessagingServiceSid: msid,
-        Body: `Black Cafe @ Marly's Yard: ${note} RSVP: ${link}`,
+        Body: `${from}: ${note} RSVP: ${link}`,
       })
       const res = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
