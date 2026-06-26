@@ -223,12 +223,12 @@ export default function EventPage() {
 
         {/* hosted by / host note */}
         {(event.hosted_by || event.host_note) && (
-          <div className="mb-7 flex items-start gap-4 rounded-card p-6 shadow-card" style={{ background: 'var(--bg-surface-2)' }}>
+          <div className={`mb-7 flex ${event.host_note ? 'items-start' : 'items-center'} gap-4 rounded-card p-6 shadow-card`} style={{ background: 'var(--bg-surface-2)' }}>
             <span className="flex h-[46px] w-[46px] flex-none items-center justify-center rounded-full font-display text-lg font-bold text-white" style={{ background: 'linear-gradient(135deg,#D96B43,#A62F24)' }}>
               {(event.hosted_by ?? event.title).trim().charAt(0).toUpperCase()}
             </span>
             <div>
-              <div className="mb-2 font-sans text-[12px] font-semibold tracking-[0.12em]" style={{ color: 'var(--candle)' }}>
+              <div className={`${event.host_note ? 'mb-2' : 'mb-0'} font-sans text-[12px] font-semibold tracking-[0.12em]`} style={{ color: 'var(--candle)' }}>
                 {event.hosted_by ? `HOSTED BY ${event.hosted_by.toUpperCase()}` : 'A NOTE FROM THE HOST'}
               </div>
               {event.host_note && <p className="m-0 text-[15.5px] leading-[1.62] text-text-primary">{event.host_note}</p>}
