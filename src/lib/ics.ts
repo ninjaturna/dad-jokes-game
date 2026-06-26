@@ -20,6 +20,12 @@ export function buildICS(event: EventRow): string {
     `SUMMARY:${event.title}`,
     loc && `LOCATION:${loc}`,
     event.description && `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}`,
+    // Reminder 2 days before the event (only meaningful when a start time exists)
+    start && 'BEGIN:VALARM',
+    start && 'ACTION:DISPLAY',
+    start && `DESCRIPTION:${event.title} is in 2 days`,
+    start && 'TRIGGER:-P2D',
+    start && 'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
   ].filter(Boolean)
