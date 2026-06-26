@@ -86,7 +86,7 @@ export async function deleteEvent(id: string): Promise<void> {
 export async function uploadEventImage(eventId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop() ?? 'png'
   const path = `${eventId}/${Date.now()}.${ext}`
-  const { error: upErr } = await supabase.storage.from('event-images').upload(path, file, { upsert: true })
+  const { error: upErr } = await supabase.storage.from('event-images').upload(path, file, { upsert: true, contentType: file.type })
   if (upErr) throw upErr
   const { data } = supabase.storage.from('event-images').getPublicUrl(path)
   const { error: updErr } = await supabase.from('events').update({ image_url: data.publicUrl }).eq('id', eventId)

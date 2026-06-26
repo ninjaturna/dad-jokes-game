@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { useAuth } from '../../hooks/useAuth'
 import { getHostGuests, createEvent, type GuestRow, type NewEventInput } from '../../lib/createEvent'
-import { getHostLocations } from '../../lib/host'
+import { getHostLocations, getVenues, createVenue, type Venue } from '../../lib/host'
 import { uploadEventImage } from '../../lib/manageEvent'
 
 const TAGS = [
@@ -39,13 +39,19 @@ export default function CreateEvent() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [_locationSuggestions, setLocationSuggestions] = useState<string[]>([])
   const [imgFile, setImgFile] = useState<File | null>(null)
   const [imgPreview, setImgPreview] = useState('')
   const imgInputRef = useRef<HTMLInputElement>(null)
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [venueId, setVenueId] = useState('__custom__')
+  const [showAddVenue, setShowAddVenue] = useState(false)
+  const [newVenueName, setNewVenueName] = useState('')
+  const [newVenueAddress, setNewVenueAddress] = useState('')
+  const [addingVenue, setAddingVenue] = useState(false)
 
   const [f, setF] = useState<NewEventInput>({
-    title: '', description: '', date: '', startTime: '', endTime: '', timezone: 'America/New_York', place: '15121 NE 11th ct North Miami Beach, FL 33162',
+    title: '', description: '', date: '', startTime: '', endTime: '', timezone: 'America/New_York', place: '',
     visibility: 'unlisted',
     tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'all',
     bringNote: '', wearNote: '', parkingNote: '',
@@ -60,6 +66,7 @@ export default function CreateEvent() {
     if (!user) return
     getHostGuests(user.id).then(setGuests)
     getHostLocations(user.id).then(setLocationSuggestions)
+    getVenues(user.id).then(setVenues)
   }, [user])
 
   const slugPreview = useMemo(() => {
@@ -84,6 +91,25 @@ export default function CreateEvent() {
   function toggleGuest(id: string) {
     setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   }
+  function handleVenueChange(id: string) {
+    if (id === '__add__') { setShowAddVenue(true); setNewVenueName(f.place); return }
+    setVenueId(id); setShowAddVenue(false)
+    if (id === '__custom__') return
+    const v = venues.find((v) => v.id === id)
+    if (v) set('place', v.name)
+  }
+
+  async function handleAddVenue() {
+    if (!user || !newVenueName.trim()) return
+    setAddingVenue(true)
+    try {
+      const v = await createVenue(user.id, newVenueName, newVenueAddress)
+      setVenues((prev) => [...prev, v].sort((a, b) => a.name.localeCompare(b.name)))
+      setVenueId(v.id); set('place', v.name)
+      setShowAddVenue(false); setNewVenueName(''); setNewVenueAddress('')
+    } finally { setAddingVenue(false) }
+  }
+
   function addInfoPage(pt: { type: string; title: string }) {
     setF((p) => p.infoPages.find((x) => x.type === pt.type) ? p : { ...p, infoPages: [...p.infoPages, pt] })
   }
@@ -193,11 +219,44 @@ export default function CreateEvent() {
               </div>
             </div>
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
-            <input value={f.place} onChange={(e) => set('place', e.target.value)} placeholder="The Yard · Little Haiti, Miami"
-              list="loc-suggestions" className={`${inputCls} mb-[18px]`} style={field} />
-            <datalist id="loc-suggestions">
-              {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
-            </datalist>
+            <select value={showAddVenue ? '__add__' : venueId} onChange={(e) => handleVenueChange(e.target.value)}
+              className={`${inputCls} mb-2`} style={field}>
+              <option value="__custom__">Custom location…</option>
+              {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              <option value="__add__">＋ Save new venue…</option>
+            </select>
+            {!showAddVenue && venueId === '__custom__' && (
+              <input value={f.place} onChange={(e) => set('place', e.target.value)}
+                placeholder="Venue name or address" className={`${inputCls} mb-[18px]`} style={field} />
+            )}
+            {!showAddVenue && venueId !== '__custom__' && (
+              <div className="mb-[18px]">
+                {venues.find((v) => v.id === venueId)?.address && (
+                  <p className="text-[12.5px] mt-1 mb-0 px-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {venues.find((v) => v.id === venueId)?.address}
+                  </p>
+                )}
+              </div>
+            )}
+            {showAddVenue && (
+              <div className="mb-[18px] p-4 border border-border rounded-[10px]" style={{ background: 'var(--bg-surface-2)' }}>
+                <div className="text-[12px] font-semibold text-text-secondary mb-2">New venue</div>
+                <input value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)}
+                  placeholder="Venue name (e.g. Marly's Yard)" className={`${inputCls} mb-2`} style={field} />
+                <input value={newVenueAddress} onChange={(e) => setNewVenueAddress(e.target.value)}
+                  placeholder="Address (optional)" className={`${inputCls} mb-3`} style={field} />
+                <div className="flex gap-2 justify-end">
+                  <button type="button" onClick={() => { setShowAddVenue(false); setVenueId('__custom__') }}
+                    className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2 rounded-[8px] cursor-pointer"
+                    style={{ background: 'transparent' }}>Cancel</button>
+                  <button type="button" onClick={handleAddVenue} disabled={!newVenueName.trim() || addingVenue}
+                    className="font-sans text-[13px] font-bold px-5 py-2 rounded-[8px] disabled:opacity-50 cursor-pointer text-white"
+                    style={{ background: 'var(--accent)', border: 'none' }}>
+                    {addingVenue ? 'Saving…' : 'Save venue'}
+                  </button>
+                </div>
+              </div>
+            )}
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Visibility</label>
             <select value={f.visibility} onChange={(e) => set('visibility', e.target.value as NewEventInput['visibility'])}
               className={inputCls} style={field}>
@@ -216,7 +275,7 @@ export default function CreateEvent() {
             <div className="flex items-center justify-between px-5 py-4">
               <div>
                 <div className="text-[13px] font-semibold text-text-primary">Event photo</div>
-                <div className="text-[12px] text-text-muted mt-0.5">PNG, WebP or GIF — shown on the invite page.</div>
+                <div className="text-[12px] text-text-muted mt-0.5">PNG, JPEG, WebP or GIF — shown on the invite page.</div>
               </div>
               <button onClick={() => imgInputRef.current?.click()}
                 className="text-[13px] font-semibold px-4 py-2 rounded-[8px] border border-border text-text-secondary whitespace-nowrap"
@@ -224,7 +283,7 @@ export default function CreateEvent() {
                 {imgPreview ? 'Change photo' : 'Upload photo'}
               </button>
             </div>
-            <input ref={imgInputRef} type="file" accept="image/png,image/webp,image/gif" className="hidden" onChange={pickImage} />
+            <input ref={imgInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={pickImage} />
           </section>
 
           {/* SERIES & TAGS */}

@@ -66,4 +66,17 @@ export async function getHostLocations(hostId: string): Promise<string[]> {
   return [...new Set((data ?? []).map((e) => e.location_name as string).filter(Boolean))]
 }
 
+export interface Venue { id: string; name: string; address: string | null }
+
+export async function getVenues(hostId: string): Promise<Venue[]> {
+  const { data } = await supabase.from('venues').select('id,name,address').eq('host_id', hostId).order('name')
+  return (data as Venue[]) ?? []
+}
+
+export async function createVenue(hostId: string, name: string, address?: string): Promise<Venue> {
+  const { data, error } = await supabase.from('venues').insert({ host_id: hostId, name: name.trim(), address: address?.trim() || null }).select('id,name,address').single()
+  if (error) throw error
+  return data as Venue
+}
+
 export async function signOut() { await supabase.auth.signOut() }

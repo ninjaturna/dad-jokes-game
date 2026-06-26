@@ -232,7 +232,7 @@ export default function SendInvites() {
             <div className="overflow-hidden rounded-[14px] border border-border"
               style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
               <div className="px-4 py-3 border-b border-border text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                <span className="font-semibold text-text-secondary">From</span> Black Cafe @ Marly's Yard
+                <span className="font-semibold text-text-secondary">From</span> Black Cafe{event.location_name ? ` @ ${event.location_name}` : ''}
               </div>
               <div className="p-5">
                 <div className="ml-auto max-w-[260px] rounded-[16px] rounded-br-[4px] px-4 py-3 text-[13.5px] leading-[1.55]"
@@ -253,7 +253,7 @@ export default function SendInvites() {
             <div className="overflow-hidden rounded-[14px] border border-border"
               style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-card)' }}>
               <div className="px-4 py-3 border-b border-border text-[12px]" style={{ color: 'var(--text-muted)' }}>
-                <span className="font-semibold text-text-secondary">From</span> Black Cafe @ Marly's Yard
+                <span className="font-semibold text-text-secondary">From</span> Black Cafe{event.location_name ? ` @ ${event.location_name}` : ''}
                 {' · '}<span className="font-semibold text-text-secondary">Subj</span> You're invited to the yard
               </div>
               <div className="p-6 text-center" style={{ background: tpl.cardBg }}>

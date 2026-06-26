@@ -10,7 +10,7 @@ import {
   type DatePoll, type Slot,
 } from '../../lib/manageEvent'
 import { useAuth } from '../../hooks/useAuth'
-import { getHostLocations } from '../../lib/host'
+import { getHostLocations, getVenues, createVenue, type Venue } from '../../lib/host'
 import type { EventRow } from '../../types/events'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -47,18 +47,29 @@ export default function ManageEvent() {
   const [addingSlot, setAddingSlot] = useState(false)
   const [enablingPotluck, setEnablingPotluck] = useState(false)
   const [publishSaving, setPublishSaving] = useState(false)
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([])
+  const [_locationSuggestions, setLocationSuggestions] = useState<string[]>([])
   const [rsvpBy, setRsvpBy] = useState('')
   const [allowPlusOnes, setAllowPlusOnes] = useState(true)
   const [plusMax, setPlusMax] = useState(1)
   const [audience, setAudience] = useState<'all' | 'kid_friendly' | 'adults'>('all')
   const [hostedBy, setHostedBy] = useState('')
   const [imageUploading, setImageUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
   const imgInputRef = useRef<HTMLInputElement>(null)
   const locationInputRef = useRef<HTMLInputElement>(null)
+  const [venues, setVenues] = useState<Venue[]>([])
+  const [venueId, setVenueId] = useState('__custom__')
+  const [showAddVenue, setShowAddVenue] = useState(false)
+  const [newVenueName, setNewVenueName] = useState('')
+  const [newVenueAddress, setNewVenueAddress] = useState('')
+  const [addingVenue, setAddingVenue] = useState(false)
 
   const { user } = useAuth()
-  useEffect(() => { if (user) getHostLocations(user.id).then(setLocationSuggestions) }, [user])
+  useEffect(() => {
+    if (!user) return
+    getHostLocations(user.id).then(setLocationSuggestions)
+    getVenues(user.id).then(setVenues)
+  }, [user])
 
   // Google Maps Places autocomplete on the location input
   useEffect(() => {
@@ -109,6 +120,32 @@ export default function ManageEvent() {
 
   useEffect(() => { if (id) reload(id) }, [id])
 
+  // Sync venueId when event and venues are both loaded
+  useEffect(() => {
+    if (!event || !venues.length) return
+    const match = venues.find((v) => v.name === event.location_name)
+    setVenueId(match?.id ?? '__custom__')
+  }, [event, venues])
+
+  function handleVenueChange(id: string) {
+    if (id === '__add__') { setShowAddVenue(true); setNewVenueName(place); return }
+    setVenueId(id); setShowAddVenue(false)
+    if (id === '__custom__') return
+    const v = venues.find((v) => v.id === id)
+    if (v) setPlace(v.name)
+  }
+
+  async function handleAddVenue() {
+    if (!user || !newVenueName.trim()) return
+    setAddingVenue(true)
+    try {
+      const v = await createVenue(user.id, newVenueName, newVenueAddress)
+      setVenues((prev) => [...prev, v].sort((a, b) => a.name.localeCompare(b.name)))
+      setVenueId(v.id); setPlace(v.name)
+      setShowAddVenue(false); setNewVenueName(''); setNewVenueAddress('')
+    } finally { setAddingVenue(false) }
+  }
+
   if (!event) return <div className="min-h-screen bg-bg-page" />
 
   const orig = toInputs(event.starts_at)
@@ -134,8 +171,13 @@ export default function ManageEvent() {
     if (!file || !id) return
     e.target.value = ''
     setImageUploading(true)
-    try { await uploadEventImage(id, file); await reload(id) }
-    finally { setImageUploading(false) }
+    setUploadError('')
+    try {
+      await uploadEventImage(id, file)
+      await reload(id)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed — try a smaller file.')
+    } finally { setImageUploading(false) }
   }
 
   async function save() {
@@ -300,7 +342,8 @@ export default function ManageEvent() {
           <div className="p-[18px] flex items-center gap-3">
             <div className="flex-1">
               <div className="font-display font-bold text-[15px] mb-0.5">Event photo</div>
-              <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>PNG, WebP, or GIF — shown on the invite page.</div>
+              <div className="text-[12.5px]" style={{ color: 'var(--text-muted)' }}>PNG, JPEG, WebP, or GIF — shown on the invite page.</div>
+              {uploadError && <div className="text-[12px] mt-1" style={{ color: 'var(--no, #A62F24)' }}>{uploadError}</div>}
             </div>
             <input ref={imgInputRef} type="file" accept="image/png,image/webp,image/gif,image/jpeg" className="hidden"
               onChange={handleImageUpload} />
@@ -341,19 +384,39 @@ export default function ManageEvent() {
           </div>
           <div>
             <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Location</label>
-            <input
-              ref={locationInputRef}
-              value={place}
-              onChange={(e) => setPlace(e.target.value)}
-              placeholder={import.meta.env.VITE_GOOGLE_MAPS_KEY ? 'Search for a venue…' : 'Venue name'}
-              list={import.meta.env.VITE_GOOGLE_MAPS_KEY ? undefined : 'loc-suggestions'}
-              className={inputCls}
-              style={field}
-            />
-            {!import.meta.env.VITE_GOOGLE_MAPS_KEY && (
-              <datalist id="loc-suggestions">
-                {locationSuggestions.map((loc) => <option key={loc} value={loc} />)}
-              </datalist>
+            <select value={showAddVenue ? '__add__' : venueId} onChange={(e) => handleVenueChange(e.target.value)}
+              className={`${inputCls} mb-2`} style={field}>
+              <option value="__custom__">Custom location…</option>
+              {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              <option value="__add__">＋ Save new venue…</option>
+            </select>
+            {!showAddVenue && venueId === '__custom__' && (
+              <input ref={locationInputRef} value={place} onChange={(e) => setPlace(e.target.value)}
+                placeholder="Venue name or address" className={inputCls} style={field} />
+            )}
+            {!showAddVenue && venueId !== '__custom__' && venues.find((v) => v.id === venueId)?.address && (
+              <p className="text-[12.5px] mt-1 mb-0" style={{ color: 'var(--text-muted)' }}>
+                {venues.find((v) => v.id === venueId)?.address}
+              </p>
+            )}
+            {showAddVenue && (
+              <div className="mt-1 p-4 border border-border rounded-[10px]" style={{ background: 'var(--bg-surface-2)' }}>
+                <div className="text-[12px] font-semibold text-text-secondary mb-2">New venue</div>
+                <input value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)}
+                  placeholder="Venue name (e.g. Marly's Yard)" className={`${inputCls} mb-2`} style={field} />
+                <input value={newVenueAddress} onChange={(e) => setNewVenueAddress(e.target.value)}
+                  placeholder="Address (optional)" className={`${inputCls} mb-3`} style={field} />
+                <div className="flex gap-2 justify-end">
+                  <button type="button" onClick={() => { setShowAddVenue(false); setVenueId('__custom__') }}
+                    className="border border-border text-text-secondary font-sans text-[13px] font-semibold px-4 py-2 rounded-[8px] cursor-pointer"
+                    style={{ background: 'transparent' }}>Cancel</button>
+                  <button type="button" onClick={handleAddVenue} disabled={!newVenueName.trim() || addingVenue}
+                    className="font-sans text-[13px] font-bold px-5 py-2 rounded-[8px] disabled:opacity-50 cursor-pointer text-white"
+                    style={{ background: 'var(--accent)', border: 'none' }}>
+                    {addingVenue ? 'Saving…' : 'Save venue'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
