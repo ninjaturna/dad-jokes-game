@@ -45,7 +45,14 @@ async function uniqueSlug(base: string): Promise<string> {
 
 export async function createEvent(hostId: string, input: NewEventInput, publish: boolean): Promise<EventRow> {
   const starts_at = input.date && input.startTime ? new Date(`${input.date}T${input.startTime}`).toISOString() : null
-  const ends_at = input.date && input.endTime ? new Date(`${input.date}T${input.endTime}`).toISOString() : null
+  let ends_at: string | null = null
+  if (input.date && input.endTime) {
+    const startDt = new Date(`${input.date}T${input.startTime || '00:00'}`)
+    const endDt = new Date(`${input.date}T${input.endTime}`)
+    // End at/before start means it runs past midnight — roll to the next day.
+    if (endDt <= startDt) endDt.setDate(endDt.getDate() + 1)
+    ends_at = endDt.toISOString()
+  }
   const slug = await uniqueSlug(slugify(input.title))
   const { data: event, error } = await supabase.from('events').insert({
     host_id: hostId,

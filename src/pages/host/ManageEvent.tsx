@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
-import { downloadICS, googleCalUrl } from '../../lib/ics'
+import { icsUrl, googleCalUrl } from '../../lib/ics'
 import {
   getEventById, updateEventDetails, confirmedCount,
   getDatePoll, addDateOption, lockDatePoll, createDatePoll,
@@ -34,13 +34,14 @@ export default function ManageEvent() {
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [place, setPlace] = useState('')
+  const [locationAddress, setLocationAddress] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'unlisted' | 'public'>('unlisted')
   const [notify, setNotify] = useState(true)
   const [notifyMessage, setNotifyMessage] = useState('')
   const [savedFlash, setSavedFlash] = useState(false)
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const formRef = useRef({ title: '', description: '', date: '', startTime: '', endTime: '', place: '', visibility: 'unlisted' as 'private' | 'unlisted' | 'public', rsvpBy: '', allowPlusOnes: true, plusMax: 1, audience: 'adults' as 'all' | 'kid_friendly' | 'adults', hostedBy: '' })
+  const formRef = useRef({ title: '', description: '', date: '', startTime: '', endTime: '', place: '', locationAddress: '', visibility: 'unlisted' as 'private' | 'unlisted' | 'public', rsvpBy: '', allowPlusOnes: true, plusMax: 1, audience: 'adults' as 'all' | 'kid_friendly' | 'adults', hostedBy: '' })
   const dirtyRef = useRef(false)
   const eventRef = useRef<EventRow | null>(null)
   const [goingN, setGoingN] = useState(0)
@@ -115,6 +116,7 @@ export default function ManageEvent() {
     setStartTime(t.time)
     setEndTime(toInputs(ev.ends_at).time)
     setPlace(ev.location_name ?? '')
+    setLocationAddress(ev.location_address ?? '')
     setVisibility(ev.visibility)
     setRsvpBy(ev.rsvp_by ?? '')
     setAllowPlusOnes(ev.allow_plus_ones)
@@ -133,13 +135,14 @@ export default function ManageEvent() {
     title !== event.title || description !== (event.description ?? '') ||
     date !== toInputs(event.starts_at).date || startTime !== toInputs(event.starts_at).time ||
     endTime !== toInputs(event.ends_at).time || place !== (event.location_name ?? '') ||
+    locationAddress !== (event.location_address ?? '') ||
     visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') ||
     allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max ||
     audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
   )
 
   // Keep refs current every render (safe to assign in render body)
-  formRef.current = { title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy }
+  formRef.current = { title, description, date, startTime, endTime, place, locationAddress, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy }
   dirtyRef.current = dirty
   eventRef.current = event
 
@@ -151,7 +154,7 @@ export default function ManageEvent() {
     clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => { void doSave() }, 800)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy, dirty])
+  }, [title, description, date, startTime, endTime, place, locationAddress, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy, dirty])
 
   // Belt-and-suspenders: also save immediately on unmount if still dirty
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,7 +172,7 @@ export default function ManageEvent() {
     setVenueId(id); setShowAddVenue(false)
     if (id === '__custom__') return
     const v = venues.find((v) => v.id === id)
-    if (v) setPlace(v.name)
+    if (v) { setPlace(v.name); setLocationAddress(v.address ?? '') }
   }
 
   async function handleAddVenue() {
@@ -178,7 +181,7 @@ export default function ManageEvent() {
     try {
       const v = await createVenue(user.id, newVenueName, newVenueAddress)
       setVenues((prev) => [...prev, v].sort((a, b) => a.name.localeCompare(b.name)))
-      setVenueId(v.id); setPlace(v.name)
+      setVenueId(v.id); setPlace(v.name); setLocationAddress(v.address ?? '')
       setShowAddVenue(false); setNewVenueName(''); setNewVenueAddress('')
     } finally { setAddingVenue(false) }
   }
@@ -190,8 +193,15 @@ export default function ManageEvent() {
     setAutoSaveState('saving')
     try {
       const starts_at = f.date && f.startTime ? new Date(`${f.date}T${f.startTime}`).toISOString() : ev.starts_at
-      const ends_at = f.date && f.endTime ? new Date(`${f.date}T${f.endTime}`).toISOString() : null
-      const updates = { title: f.title || ev.title, description: f.description.trim() || null, starts_at, ends_at, location_name: f.place || null, visibility: f.visibility, rsvp_by: f.rsvpBy || null, allow_plus_ones: f.allowPlusOnes, plus_one_max: f.plusMax, audience: f.audience, hosted_by: f.hostedBy || null }
+      let ends_at: string | null = null
+      if (f.date && f.endTime) {
+        const startDt = new Date(`${f.date}T${f.startTime || '00:00'}`)
+        const endDt = new Date(`${f.date}T${f.endTime}`)
+        // End at/before start means it runs past midnight — roll to the next day.
+        if (endDt <= startDt) endDt.setDate(endDt.getDate() + 1)
+        ends_at = endDt.toISOString()
+      }
+      const updates = { title: f.title || ev.title, description: f.description.trim() || null, starts_at, ends_at, location_name: f.place || null, location_address: f.locationAddress || null, visibility: f.visibility, rsvp_by: f.rsvpBy || null, allow_plus_ones: f.allowPlusOnes, plus_one_max: f.plusMax, audience: f.audience, hosted_by: f.hostedBy || null }
       await updateEventDetails(id, updates)
       setEvent((e) => e ? { ...e, ...updates } : e)
       setAutoSaveState('saved')
@@ -464,12 +474,11 @@ export default function ManageEvent() {
             </select>
             {!showAddVenue && venueId === '__custom__' && (
               <input ref={locationInputRef} value={place} onChange={(e) => setPlace(e.target.value)}
-                placeholder="Venue name or address" className={inputCls} style={field} />
+                placeholder="Venue name" className={`${inputCls} mb-2`} style={field} />
             )}
-            {!showAddVenue && venueId !== '__custom__' && venues.find((v) => v.id === venueId)?.address && (
-              <p className="text-[12.5px] mt-1 mb-0" style={{ color: 'var(--text-muted)' }}>
-                {venues.find((v) => v.id === venueId)?.address}
-              </p>
+            {!showAddVenue && (
+              <input value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)}
+                placeholder="Street address (shown on the invite)" className={inputCls} style={field} />
             )}
             {showAddVenue && (
               <div className="mt-1 p-4 border border-border rounded-[10px]" style={{ background: 'var(--bg-surface-2)' }}>
@@ -841,11 +850,11 @@ export default function ManageEvent() {
             Sent with every confirmation — guests get a real calendar hold.
           </p>
           <div className="flex gap-2.5 flex-wrap">
-            <button onClick={() => downloadICS(event)}
-              className="flex items-center gap-2.5 border border-border text-text-primary font-sans text-[13.5px] font-semibold px-[18px] py-[11px] rounded-[9px] cursor-pointer"
+            <a href={icsUrl(event)}
+              className="flex items-center gap-2.5 border border-border text-text-primary font-sans text-[13.5px] font-semibold px-[18px] py-[11px] rounded-[9px] cursor-pointer no-underline"
               style={{ background: 'transparent' }}>
               <span className="text-[15px]"></span> Apple · .ics
-            </button>
+            </a>
             <button onClick={() => window.open(googleCalUrl(event), '_blank', 'noopener')}
               className="flex items-center gap-2.5 border border-border text-text-primary font-sans text-[13.5px] font-semibold px-[18px] py-[11px] rounded-[9px] cursor-pointer"
               style={{ background: 'transparent' }}>

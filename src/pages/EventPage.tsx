@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Crest from '../components/brand/Crest'
 import ThemeToggle from '../components/ThemeToggle'
-import { downloadICS } from '../lib/ics'
+import { icsUrl } from '../lib/ics'
 import { getEventBySlug, getRsvps, getMyRsvp, submitRsvp, countGoing, subscribeRsvps } from '../lib/events'
 import { getInfoPages, INFO_TYPES, type InfoPageRow, type InfoItem } from '../lib/infoPages'
 import type { EventRow, RsvpRow, RsvpResponse } from '../types/events'
@@ -289,7 +289,7 @@ export default function EventPage() {
               <h3 className="mb-1 mt-3 font-display text-3xl font-extrabold">You're in.</h3>
               <p className="mb-5 text-text-secondary">See you in the yard{name.trim() ? `, ${name.trim()}` : ''}.</p>
               <div className="flex flex-wrap justify-center gap-2">
-                <button onClick={() => downloadICS(event)} className="rounded-control border border-text-muted px-4 py-2.5 text-sm font-semibold text-text-primary">Add to calendar</button>
+                <a href={icsUrl(event)} className="rounded-control border border-text-muted px-4 py-2.5 text-sm font-semibold text-text-primary no-underline">Add to calendar</a>
                 <button onClick={() => setSent(false)} className="px-3 py-2.5 text-sm font-semibold text-accent-2">Change response</button>
               </div>
             </div>
@@ -378,7 +378,7 @@ export default function EventPage() {
 
         {/* footer actions */}
         <div className="mt-7 flex justify-center gap-4">
-          <button onClick={() => downloadICS(event)} className="font-sans text-sm font-semibold text-accent-2">Add to calendar</button>
+          <a href={icsUrl(event)} className="font-sans text-sm font-semibold text-accent-2 no-underline">Add to calendar</a>
           {event.location_url && (
             <>
               <span style={{ color: 'var(--border)' }}>·</span>

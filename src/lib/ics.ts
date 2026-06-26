@@ -40,6 +40,12 @@ export function googleCalUrl(event: EventRow): string {
   return `https://calendar.google.com/calendar/render?${p.toString()}`
 }
 
+// Server-served .ics URL — works on iOS Safari and macOS Calendar, unlike a client blob.
+export function icsUrl(event: EventRow): string {
+  const base = import.meta.env.VITE_SUPABASE_URL
+  return `${base}/functions/v1/event-ics?slug=${encodeURIComponent(event.slug)}`
+}
+
 export function downloadICS(event: EventRow) {
   const blob = new Blob([buildICS(event)], { type: 'text/calendar;charset=utf-8' })
   const url = URL.createObjectURL(blob)

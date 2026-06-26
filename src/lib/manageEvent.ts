@@ -11,6 +11,7 @@ export async function updateEventDetails(id: string, fields: {
   description?: string | null
   starts_at?: string | null
   location_name?: string | null
+  location_address?: string | null
   visibility?: 'private' | 'unlisted' | 'public'
   status?: 'draft' | 'published' | 'passed' | 'cancelled'
   ends_at?: string | null
