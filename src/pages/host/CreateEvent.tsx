@@ -53,7 +53,7 @@ export default function CreateEvent() {
   const [f, setF] = useState<NewEventInput>({
     title: '', description: '', date: '', startTime: '', endTime: '', timezone: 'America/New_York', place: '',
     visibility: 'unlisted',
-    tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'all',
+    tag: 'Supper Club', allowPlusOnes: true, plusMax: 1, audience: 'adults',
     bringNote: '', wearNote: '', parkingNote: '',
     links: [{ label: '', url: '' }],
     polls: { dietary: true, date: false, potluck: false },

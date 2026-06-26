@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ThemeToggle from '../../components/ThemeToggle'
 import { downloadICS, googleCalUrl } from '../../lib/ics'
@@ -37,6 +37,8 @@ export default function ManageEvent() {
   const [notify, setNotify] = useState(true)
   const [notifyMessage, setNotifyMessage] = useState('')
   const [savedFlash, setSavedFlash] = useState(false)
+  const [autoSaveState, setAutoSaveState] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [goingN, setGoingN] = useState(0)
   const [poll, setPoll] = useState<DatePoll | null>(null)
   const [newOption, setNewOption] = useState('')
@@ -120,6 +122,26 @@ export default function ManageEvent() {
 
   useEffect(() => { if (id) reload(id) }, [id])
 
+  // Null-safe dirty check (needed before early return so auto-save useEffect can reference it)
+  const dirty = !!event && (
+    title !== event.title || description !== (event.description ?? '') ||
+    date !== toInputs(event.starts_at).date || startTime !== toInputs(event.starts_at).time ||
+    endTime !== toInputs(event.ends_at).time || place !== (event.location_name ?? '') ||
+    visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') ||
+    allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max ||
+    audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
+  )
+
+  // Auto-save: 2s debounce after any field change while dirty
+  useEffect(() => {
+    if (!dirty || !id || !event) return
+    setAutoSaveState('pending')
+    clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(() => { void doAutoSave() }, 2000)
+    return () => clearTimeout(autoSaveTimer.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy, dirty])
+
   // Sync venueId when event and venues are both loaded
   useEffect(() => {
     if (!event || !venues.length) return
@@ -147,10 +169,6 @@ export default function ManageEvent() {
   }
 
   if (!event) return <div className="min-h-screen bg-bg-page" />
-
-  const orig = toInputs(event.starts_at)
-  const origEnd = toInputs(event.ends_at)
-  const dirty = title !== event.title || description !== (event.description ?? '') || date !== orig.date || startTime !== orig.time || endTime !== origEnd.time || place !== (event.location_name ?? '') || visibility !== event.visibility || rsvpBy !== (event.rsvp_by ?? '') || allowPlusOnes !== event.allow_plus_ones || plusMax !== event.plus_one_max || audience !== event.audience || hostedBy !== (event.hosted_by ?? '')
 
   async function handlePublish() {
     if (!id) return
@@ -180,14 +198,27 @@ export default function ManageEvent() {
     } finally { setImageUploading(false) }
   }
 
+  const doAutoSave = useCallback(async () => {
+    if (!id || !event) return
+    setAutoSaveState('saving')
+    try {
+      const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event.starts_at
+      const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
+      const updates = { title: title || event.title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null }
+      await updateEventDetails(id, updates)
+      setEvent((e) => e ? { ...e, ...updates } : e)
+      setAutoSaveState('saved')
+      setTimeout(() => setAutoSaveState('idle'), 2000)
+    } catch { setAutoSaveState('idle') }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, event, title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy])
+
   async function save() {
     if (!id) return
-    const starts_at = date && startTime ? new Date(`${date}T${startTime}`).toISOString() : event!.starts_at
-    const ends_at = date && endTime ? new Date(`${date}T${endTime}`).toISOString() : null
-    await updateEventDetails(id, { title, description: description.trim() || null, starts_at, ends_at, location_name: place || null, visibility, rsvp_by: rsvpBy || null, allow_plus_ones: allowPlusOnes, plus_one_max: plusMax, audience, hosted_by: hostedBy || null })
+    clearTimeout(autoSaveTimer.current)
+    await doAutoSave()
     setSavedFlash(true)
     setTimeout(() => setSavedFlash(false), 2500)
-    await reload(id)
   }
 
   async function handleAddOption() {
@@ -357,7 +388,19 @@ export default function ManageEvent() {
 
         {/* EDIT DETAILS */}
         <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
-          <div className="font-display font-bold text-base mb-[18px]">Edit details</div>
+          <div className="flex items-center justify-between mb-[18px]">
+            <div className="font-display font-bold text-base">Edit details</div>
+            <div className="flex items-center gap-3">
+              {autoSaveState === 'pending' && <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>Unsaved…</span>}
+              {autoSaveState === 'saving' && <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>Saving…</span>}
+              {autoSaveState === 'saved' && <span className="text-[12px] font-semibold" style={{ color: 'var(--accent-2)' }}>✓ Saved</span>}
+              <button onClick={save}
+                className="border border-border font-sans text-[12.5px] font-semibold px-3 py-[7px] rounded-[7px] cursor-pointer whitespace-nowrap"
+                style={{ background: 'var(--bg-surface-2)', color: 'var(--text-secondary)' }}>
+                Save draft
+              </button>
+            </div>
+          </div>
           <label className="block text-[12px] font-semibold text-text-secondary mb-[7px]">Event name</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)}
             className="w-full border border-border text-text-primary font-display font-semibold text-[17px] px-[15px] py-[13px] rounded-[9px] outline-none mb-3"
