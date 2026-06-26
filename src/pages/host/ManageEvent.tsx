@@ -140,19 +140,19 @@ export default function ManageEvent() {
   dirtyRef.current = dirty
   eventRef.current = event
 
-  // Auto-save: 800ms debounce after any field change while dirty
+  // Auto-save: 800ms debounce. No cleanup → timer fires even if component unmounts during navigation.
+  // (clearTimeout inside effect body still debounces rapid changes; cleanup was only ever harmful on unmount)
   useEffect(() => {
     if (!dirty || !id || !event) return
     setAutoSaveState('pending')
     clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => { void doSave() }, 800)
-    return () => clearTimeout(autoSaveTimer.current)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, description, date, startTime, endTime, place, visibility, rsvpBy, allowPlusOnes, plusMax, audience, hostedBy, dirty])
 
-  // Save on unmount if there are unsaved changes (prevents data loss on navigation)
+  // Belt-and-suspenders: also save immediately on unmount if still dirty
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => () => { if (dirtyRef.current) void doSave() }, [])
+  useEffect(() => () => { if (dirtyRef.current) { clearTimeout(autoSaveTimer.current); void doSave() } }, [])
 
   // Sync venueId when event and venues are both loaded
   useEffect(() => {
@@ -193,7 +193,11 @@ export default function ManageEvent() {
       setEvent((e) => e ? { ...e, ...updates } : e)
       setAutoSaveState('saved')
       setTimeout(() => setAutoSaveState('idle'), 2000)
-    } catch { setAutoSaveState('idle') }
+    } catch (err) {
+      console.error('Save failed:', err)
+      setAutoSaveState('idle')
+      setUploadError(err instanceof Error ? err.message : 'Save failed — please try again.')
+    }
   }
 
   if (!event) return <div className="min-h-screen bg-bg-page" />
