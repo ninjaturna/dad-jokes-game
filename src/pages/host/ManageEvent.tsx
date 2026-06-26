@@ -9,6 +9,7 @@ import {
   uploadEventImage,
   type DatePoll, type Slot,
 } from '../../lib/manageEvent'
+import { sendReminder } from '../../lib/invites'
 import { useAuth } from '../../hooks/useAuth'
 import { getHostLocations, getVenues, createVenue, type Venue } from '../../lib/host'
 import type { EventRow } from '../../types/events'
@@ -68,6 +69,8 @@ export default function ManageEvent() {
   const [newVenueName, setNewVenueName] = useState('')
   const [newVenueAddress, setNewVenueAddress] = useState('')
   const [addingVenue, setAddingVenue] = useState(false)
+  const [reminderState, setReminderState] = useState<'idle' | 'sending'>('idle')
+  const [reminderResult, setReminderResult] = useState<{ configured: boolean; delivered: number } | null>(null)
 
   const { user } = useAuth()
   useEffect(() => {
@@ -228,6 +231,15 @@ export default function ManageEvent() {
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed — try a smaller file.')
     } finally { setImageUploading(false) }
+  }
+
+  async function handleSendReminder() {
+    if (!id) return
+    setReminderState('sending')
+    try {
+      const res = await sendReminder(id)
+      setReminderResult(res)
+    } finally { setReminderState('idle') }
   }
 
   async function save() {
@@ -795,6 +807,31 @@ export default function ManageEvent() {
               </Link>
             </div>
           </div>
+        </section>
+
+        {/* REMINDER TEXT */}
+        <section className="border border-border rounded-[14px] p-6" style={{ background: 'var(--bg-surface)' }}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="font-display font-bold text-base mb-1.5">Reminder text</div>
+              <p className="text-[13px] m-0" style={{ color: 'var(--text-muted)' }}>
+                A reminder with the date, time and location goes out automatically 2 days before — to
+                everyone invited who opted in to texts. Send one now if you'd like.
+              </p>
+            </div>
+            <button onClick={handleSendReminder} disabled={reminderState === 'sending'}
+              className="border border-border text-text-primary font-sans text-[13px] font-semibold px-4 py-[9px] rounded-[8px] cursor-pointer whitespace-nowrap disabled:opacity-50"
+              style={{ background: 'transparent' }}>
+              {reminderState === 'sending' ? 'Sending…' : 'Send reminder now'}
+            </button>
+          </div>
+          {reminderResult && (
+            <div className="mt-3 text-[13px]" style={{ color: reminderResult.configured ? 'var(--accent-2)' : 'var(--candle)' }}>
+              {reminderResult.configured
+                ? `Reminder sent to ${reminderResult.delivered} ${reminderResult.delivered === 1 ? 'guest' : 'guests'} ✓`
+                : "Text isn't connected yet — check the Twilio secrets in Supabase."}
+            </div>
+          )}
         </section>
 
         {/* ADD TO CALENDAR */}

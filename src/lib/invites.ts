@@ -34,3 +34,15 @@ export async function sendSmsInvites(input: {
     return { configured: false, delivered: 0 }
   }
 }
+
+// Reminder text to everyone who was invited and opted in to SMS. Reuses the
+// audience recorded on the event when invites were sent.
+export async function sendReminder(eventId: string): Promise<SendResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-reminder', { body: { eventId } })
+    if (error) return { configured: false, delivered: 0 }
+    return data as SendResult
+  } catch {
+    return { configured: false, delivered: 0 }
+  }
+}

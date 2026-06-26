@@ -27,7 +27,12 @@ serve(async (req) => {
     )
 
     const { data: event } = await supabase
-      .from('events').select('title,slug,starts_at,location_name').eq('id', eventId).single()
+      .from('events').select('title,slug,starts_at,location_name,invited_list_ids').eq('id', eventId).single()
+
+    // Record which lists were invited, so reminders know the audience (union with prior sends)
+    const mergedLists = [...new Set([...(event?.invited_list_ids ?? []), ...listIds])]
+    await supabase.from('events').update({ invited_list_ids: mergedLists }).eq('id', eventId)
+
     const { data: members } = await supabase
       .from('list_members').select('guests(email,name)').in('list_id', listIds)
 
